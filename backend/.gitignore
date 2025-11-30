@@ -1,0 +1,8 @@
+#  variables
+.env
+
+# Service files
+netistrackgh.json
+
+# Node modules
+node_modules/

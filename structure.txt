@@ -1,0 +1,94 @@
+NetisTrackGh/
+├── 📄 README.md
+🖥️ backend/
+│   ├── 📄 package.json
+│   ├── 📄 server.js
+│   ├── 📄 netistrackgh.json
+│   ├── 📄 .env
+│   ├── 📄 .gitignore
+│   ├── 📂 scripts/
+│   │   ├── 📄 deploy.js
+│   │   └── 📄 seedData.js
+│   ├── 📂 src/
+│   │   ├── 📂 config/
+│   │   │   ├── 📄 db.js
+│   │   │   ├── 📄 firebaseAdmin.js
+│   │   │   └── 📄 swagger.js
+│   │   ├── 📂 controllers/
+│   │   │   ├── 📄 authController.js
+│   │   │   ├── 📄 siteController.js
+│   │   │   ├── 📄 fuelController.js
+│   │   │   ├── 📄 maintenanceController.js
+│   │   │   └── 📄 syncController.js
+│   │   ├── 📂 middleware/
+│   │   │   ├── 📄 requireRole.js
+│   │   │   └── 📄 verifyToken.js
+│   │   ├── 📂 models/
+│   │   │   ├── 📄 siteModel.js
+│   │   │   ├── 📄 userModel.js
+│   │   │   ├── 📄 fuelModel.js
+│   │   │   ├── 📄 maintenanceModel.js
+│   │   │   └── 📄 syncModel.js
+│   │   ├── 📂 routes/
+│   │   │   ├── 📄 authRoutes.js
+│   │   │   ├── 📄 fuelRoutes.js
+│   │   │   ├── 📄 maintenanceRoutes.js
+│   │   │   ├── 📄 syncRoutes.js
+│   │   │   └── 📄 siteRoutes.js
+│   │   └── 📂 utils/
+│   │       ├── 📄 errorHandler.js
+│   │       ├── 📄 logger.js
+│   │       ├── 📄 fuelCalculator.js
+│   │       └── 📄 maintenanceScheduler.js
+│   └── 📂 tests/
+│       └── 📄 api.test.js
+├── 📚 documentation/
+│   ├── 📄 requirements.md
+│   ├── 📂 api/
+│   │   └── 📄 endpoints.md
+│   ├── 📂 database/
+│   │   └── 📄 schema.md
+│   └── 📂 ui/
+│       └── 📄 ui-guide.md
+└── 🌐 frontend/
+    ├── 📄 capacitor.config.json
+    ├── 📄 package.json
+    ├── 📂 components/
+    │   ├── 📄 fuel-gauge.js
+    │   ├── 📄 maintenance-alert.js
+    │   └── 📄 site-card.js
+    ├── 📂 public/
+    │   ├── 📄 index.html
+    │   ├── 📂 css/
+    │   │   └── 📄 style.css
+    │   ├── 📂 icons/
+    │   │   ├── 📄 logo.png
+    │   │   └── 📄 icon.png   
+    │   ├── 📂 images/
+    │   └── 📂 js/
+    │       └── 📄 app.js
+    └── 📂 src/
+        ├── 📂 auth/
+        │   ├── 📄 login.js
+        │   ├── 📄 logout.js
+        │   └── 📄 register.js
+        ├── 📂 dashboard/
+        │   ├── 📄 analytics.js
+        │   └── 📄 main.js
+        ├── 📂 offline/
+        │   ├── 📄 indexeddb.js
+        │   ├── 📄 offlineManager.js
+        │   └── 📄 syncQueue.js
+        ├── 📂 pages/
+        │   ├── 📄 home.js
+        │   └── 📄 siteDetails.js
+        ├── 📂 services/
+        │   ├── 📄 authService.js
+        │   ├── 📄 firebaseConfig.js
+        │   └── 📄 siteService.js
+        ├── 📂 styles/
+        │   ├── 📄 dashboard.css
+        │   └── 📄 main.css
+        └── 📂 utils/
+            ├── 📄 helpers.js
+            └── 📄 validators.js

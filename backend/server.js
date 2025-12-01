@@ -22,12 +22,13 @@ app.use(helmet({
     }
   }
 }));
-
+// app.use(cors());
 app.use(cors({
-  origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000', 'http://localhost:3001'],
-  credentials: true,
+  origin: function (origin, callback) {
+    callback(null, true);
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+  allowedHeaders: '*'
 }));
 
 // Rate Limiting - Stricter in production
@@ -44,20 +45,23 @@ const limiter = rateLimit({
 app.use(limiter);
 
 // Body Parsing Middleware
-app.use(express.json({ 
-  limit: process.env.NODE_ENV === 'production' ? '1mb' : '10mb', // Smaller limit in production
-  verify: (req, res, buf) => {
-    try {
-      JSON.parse(buf);
-    } catch (e) {
-      res.status(400).json({
-        error: 'Invalid JSON in request body',
-        code: 'INVALID_JSON'
-      });
-      throw new Error('Invalid JSON');
-    }
-  }
+app.use(express.json({
+  limit: process.env.NODE_ENV === 'production' ? '1mb' : '10mb'
 }));
+// app.use(express.json({ 
+//   limit: process.env.NODE_ENV === 'production' ? '1mb' : '10mb', // Smaller limit in production
+//   verify: (req, res, buf) => {
+//     try {
+//       JSON.parse(buf);
+//     } catch (e) {
+//       res.status(400).json({
+//         error: 'Invalid JSON in request body',
+//         code: 'INVALID_JSON'
+//       });
+//       throw new Error('Invalid JSON');
+//     }
+//   }
+// }));
 app.use(express.urlencoded({ 
   extended: true,
   limit: process.env.NODE_ENV === 'production' ? '1mb' : '10mb'

@@ -50,45 +50,48 @@ NetisTrackGh/
 │   │   └── 📄 schema.md
 │   └── 📂 ui/
 │       └── 📄 ui-guide.md
-└── 🌐 frontend/
+└──🌐 frontend/
     ├── 📄 capacitor.config.json
     ├── 📄 package.json
-    ├── 📂 components/
-    │   ├── 📄 fuel-gauge.js
-    │   ├── 📄 maintenance-alert.js
-    │   └── 📄 site-card.js
     ├── 📂 public/
     │   ├── 📄 index.html
+    │   ├── 📄 manifest.json
+    │   ├── 📂 components/
+    │   │   ├── 📄 fuel-gauge.js
+    │   │   ├── 📄 maintenance-alert.js
+    │   │   └── 📄 site-card.js
     │   ├── 📂 css/
     │   │   └── 📄 style.css
     │   ├── 📂 icons/
     │   │   ├── 📄 logo.png
-    │   │   └── 📄 icon.png   
+    │   │   └── 📄 icon.png
     │   ├── 📂 images/
-    │   └── 📂 js/
-    │       └── 📄 app.js
-    └── 📂 src/
-        ├── 📂 auth/
-        │   ├── 📄 login.js
-        │   ├── 📄 logout.js
-        │   └── 📄 register.js
-        ├── 📂 dashboard/
-        │   ├── 📄 analytics.js
-        │   └── 📄 main.js
-        ├── 📂 offline/
-        │   ├── 📄 indexeddb.js
-        │   ├── 📄 offlineManager.js
-        │   └── 📄 syncQueue.js
-        ├── 📂 pages/
-        │   ├── 📄 home.js
-        │   └── 📄 siteDetails.js
-        ├── 📂 services/
-        │   ├── 📄 authService.js
-        │   ├── 📄 firebaseConfig.js
-        │   └── 📄 siteService.js
-        ├── 📂 styles/
-        │   ├── 📄 dashboard.css
-        │   └── 📄 main.css
-        └── 📂 utils/
-            ├── 📄 helpers.js
-            └── 📄 validators.js
+    │   ├── 📂 js/
+    │   │   └── 📄 app.js
+    │   └── 📂 src/
+    │       ├── 📂 auth/
+    │       │   ├── 📄 auth.css
+    │       │   ├── 📄 login.js
+    │       │   ├── 📄 logout.js
+    │       │   ├── 📄 password-reset.js
+    │       │   └── 📄 register.js
+    │       ├── 📂 dashboard/
+    │       │   ├── 📄 analytics.js
+    │       │   └── 📄 main.js
+    │       ├── 📂 offline/
+    │       │   ├── 📄 indexeddb.js
+    │       │   ├── 📄 offlineManager.js
+    │       │   └── 📄 syncQueue.js
+    │       ├── 📂 pages/
+    │       │   ├── 📄 home.js
+    │       │   └── 📄 siteDetails.js
+    │       ├── 📂 services/
+    │       │   ├── 📄 authService.js
+    │       │   ├── 📄 firebaseConfig.js
+    │       │   └── 📄 siteService.js
+    │       ├── 📂 styles/
+    │       │   ├── 📄 dashboard.css
+    │       │   └── 📄 main.css
+    │       └── 📂 utils/
+    │           ├── 📄 helpers.js
+    │           └── 📄 validators.js

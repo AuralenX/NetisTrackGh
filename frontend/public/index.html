@@ -1,87 +1,43 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>NetisTrackGh - Telecom Site Management</title>
 
-    <!-- PWA Manifest -->
-    <link rel="manifest" href="manifest.json" />
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NetisTrackGh - Telecom Site Management</title>
 
-    <!-- Favicon -->
-    <link rel="icon" type="image/png" href="/icons/icon.png" />
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="manifest.json">
 
-    <!-- Styles -->
-    <link rel="stylesheet" href="/css/style.css" />
-    <link rel="stylesheet" href="../src/auth/auth.css" />
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="icons/icon.png">
 
-    <!-- Firebase App (core) -->
-    <!-- <script type="module">
-      import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-      import { getAuth } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
-      import { getFirestore } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+  <!-- Global Styles -->
+  <link rel="stylesheet" href="css/style.css">
 
-      // Your Firebase configuration
-      const firebaseConfig = {
-        apiKey: "your-api-key",
-        authDomain: "your-project.firebaseapp.com",
-        projectId: "your-project-id",
-        storageBucket: "your-project.appspot.com",
-        messagingSenderId: "123456789",
-        appId: "your-app-id",
-      };
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 
-      // Initialize Firebase
-      const app = initializeApp(firebaseConfig);
-      const auth = getAuth(app);
-      const db = getFirestore(app);
+  <!-- EmailJS -->
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+</head>
 
-      // Make available globally
-      window.firebaseApp = app;
-      window.firebaseAuth = auth;
-      window.firebaseDb = db;
-    </script> -->
-  </head>
-  <body>
-    <div id="app">
-      <!-- Navigation will be added later for authenticated users -->
-      <nav id="main-nav" style="display: none">
-        <!-- Navigation will be dynamically shown for authenticated users -->
-      </nav>
+<body>
+  <div id="app">
+    <!-- Main content area where pages are rendered -->
+    <main id="main-content">
+      <div class="loading-container">
+        <div class="loading-spinner"></div>
+        <p class="loading-text">Loading NetisTrackGh...</p>
+      </div>
+    </main>
+  </div>
 
-      <!-- Main content area where pages are rendered -->
-      <main id="main-content">
-        <!-- Pages will be dynamically loaded here -->
-        <div style="padding: 40px; text-align: center">
-          <div class="loading" style="margin: 0 auto"></div>
-          <p>Loading NetisTrackGh...</p>
-        </div>
-      </main>
+  <!-- Main Application Script -->
+  <script src="src/services/authService.js"></script>
+  <script src="js/app.js"></script>
+</body>
 
-      <!-- Footer will be added later -->
-      <footer id="main-footer" style="display: none">
-        <!-- Footer content -->
-      </footer>
-    </div>
-
-    <!-- Main Application Script -->
-    <script type="module" src="js/app.js"></script>
-
-    <!-- Service Worker Registration -->
-    <!-- <script>
-      // Register service worker for PWA
-      if ("serviceWorker" in navigator) {
-        window.addEventListener("load", () => {
-          navigator.serviceWorker
-            .register("/sw.js")
-            .then((registration) => {
-              console.log("SW registered: ", registration);
-            })
-            .catch((registrationError) => {
-              console.log("SW registration failed: ", registrationError);
-            });
-        });
-      }
-    </script> -->
-  </body>
 </html>

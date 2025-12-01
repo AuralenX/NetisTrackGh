@@ -2,8 +2,7 @@ require("dotenv").config();
 const admin = require('firebase-admin');
 
 const privateKey = process.env.FIREBASE_PRIVATE_KEY
-  ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n')
-  : undefined;
+  ?.replace(/\\n/g, '\n');
 
 const serviceAccount = {
   type: "service_account",

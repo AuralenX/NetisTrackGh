@@ -534,6 +534,80 @@ const options = {
           }
         },
 
+        RefreshToken: {
+          type: 'object',
+          required: ['refreshToken'],
+          properties: {
+            refreshToken: {
+              type: 'string',
+              description: 'Refresh token from previous authentication'
+            }
+          }
+        },
+        PasswordReset: {
+          type: 'object',
+          required: ['email'],
+          properties: {
+            email: {
+              type: 'string',
+              format: 'email'
+            }
+          }
+        },
+        ChangePassword: {
+          type: 'object',
+          required: ['currentPassword', 'newPassword'],
+          properties: {
+            currentPassword: {
+              type: 'string',
+              format: 'password'
+            },
+            newPassword: {
+              type: 'string',
+              format: 'password',
+              minLength: 6
+            }
+          }
+        },
+        SecurityLog: {
+          type: 'object',
+          required: ['event'],
+          properties: {
+            event: {
+              type: 'string',
+              example: 'login_success'
+            },
+            userId: {
+              type: 'string'
+            },
+            email: {
+              type: 'string',
+              format: 'email'
+            },
+            ip: {
+              type: 'string'
+            },
+            userAgent: {
+              type: 'string'
+            },
+            details: {
+              type: 'object'
+            }
+          }
+        },
+        Logout: {
+          type: 'object',
+          properties: {
+            reason: {
+              type: 'string',
+              example: 'user_initiated'
+            },
+            deviceId: {
+              type: 'string'
+            }
+          }
+        },
+
         // Error Schema
         Error: {
           type: 'object',
@@ -650,7 +724,35 @@ const options = {
               }
             }
           }
+        },
+        InvalidCredentials: {
+      description: 'Invalid email or password',
+      content: {
+        'application/json': {
+          schema: {
+            $ref: '#/components/schemas/Error'
+          },
+          example: {
+            error: 'Invalid email or password',
+            code: 'INVALID_CREDENTIALS'
+          }
         }
+      }
+    },
+    MissingCredentials: {
+      description: 'Missing required credentials',
+      content: {
+        'application/json': {
+          schema: {
+            $ref: '#/components/schemas/Error'
+          },
+          example: {
+            error: 'Email and password are required',
+            code: 'MISSING_CREDENTIALS'
+          }
+        }
+      }
+    }
       },
       parameters: {
         SiteId: {

@@ -12,6 +12,9 @@ class NetisTrackApp {
             
             // Load authentication CSS
             this.loadAuthStyles();
+
+            // Load dashboard CSS
+            this.loadDashboardStyles();
             
             // Initialize EmailJS
             await this.initializeEmailJS();
@@ -41,11 +44,25 @@ class NetisTrackApp {
         // Create link element for auth styles
         const link = document.createElement('link');
         link.rel = 'stylesheet';
-        link.href = 'src/auth/auth.css'; // Correct path from public/
+        link.href = 'src/auth/auth.css'; 
         link.id = 'auth-styles';
         document.head.appendChild(link);
         
         console.log('✅ Auth styles loaded');
+    }
+
+    loadDashboardStyles() {
+        // Check if dashboard styles are already loaded
+        if (document.getElementById('dashboard-styles')) return;
+        
+        // Create link element for dashboard styles
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = 'src/styles/dashboard.css'; 
+        link.id = 'dashboard-styles';
+        document.head.appendChild(link);
+        
+        console.log('✅ Dashboard styles loaded');
     }
 
     initializeEmailJS() {
@@ -174,49 +191,16 @@ class NetisTrackApp {
                     this.currentPage = new pageModule.RequestAccount();
                     break;
                     
-                case 'dashboard':
-                    // We'll implement this later
-                    this.currentPage = { 
-                        render: () => `
-                            <div style="padding: 40px; text-align: center;">
-                                <h2>Dashboard</h2>
-                                <p>Welcome to NetisTrackGh Dashboard!</p>
-                                <p>This is a placeholder. Dashboard components coming soon.</p>
-                                <button onclick="authService.logout()" style="
-                                    background: #667eea;
-                                    color: white;
-                                    border: none;
-                                    padding: 10px 20px;
-                                    border-radius: 5px;
-                                    cursor: pointer;
-                                    margin-top: 20px;
-                                ">Logout</button>
-                            </div>
-                        `,
-                        attachEvents: () => {}
-                    };
+                 case 'dashboard':
+                    // Load the actual Technician Dashboard
+                    pageModule = await import('../src/dashboard/main.js');
+                    this.currentPage = new pageModule.TechnicianDashboard();
                     break;
                     
                 case 'analytics':
-                    // We'll implement this later
-                    this.currentPage = { 
-                        render: () => `
-                            <div style="padding: 40px; text-align: center;">
-                                <h2>Analytics Dashboard</h2>
-                                <p>Supervisor/Admin analytics view coming soon.</p>
-                                <button onclick="authService.logout()" style="
-                                    background: #667eea;
-                                    color: white;
-                                    border: none;
-                                    padding: 10px 20px;
-                                    border-radius: 5px;
-                                    cursor: pointer;
-                                    margin-top: 20px;
-                                ">Logout</button>
-                            </div>
-                        `,
-                        attachEvents: () => {}
-                    };
+                    // We'll implement this later for supervisors/admins
+                    pageModule = await import('../src/dashboard/analytics.js');
+                    this.currentPage = new pageModule.AnalyticsDashboard();
                     break;
                     
                 default:

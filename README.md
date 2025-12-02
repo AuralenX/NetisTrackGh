@@ -34,6 +34,8 @@ It tracks fuel consumption, schedules maintenance, logs activities, and provides
 ---
 
 ## 🛠️ Tech Stack
+<p align="center">
+
 | Layer | Technology |
 |-------|-----------|
 | Frontend | HTML, CSS, JavaScript |
@@ -41,7 +43,7 @@ It tracks fuel consumption, schedules maintenance, logs activities, and provides
 | Database | Firebase Firestore |
 | Authentication | Firebase Auth + JWT |
 | Hosting | Netlify (Backend & Frontend) |
-
+</p>
 ---
 
 ## 🔗 Quick Links
@@ -98,13 +100,13 @@ Response Example:
   }
 ```
 
-👥 Roles & Permissions
-Role	Permissions
+---
+### 👥 Roles & Permissions
 Technician	View assigned sites, log fuel/maintenance, view own reports
 Supervisor	View all sites, verify logs, view analytics, manage technicians
 Admin	Full system access, user/site management, configuration, data export
 
-📝 License
+### 📝 License
 MIT License © Auralenx
 
 <p align="center"> Made with ❤️ by <a href="https://github.com/AuralenX">AuralenX</a> </p>

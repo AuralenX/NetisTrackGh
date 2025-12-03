@@ -166,7 +166,7 @@ export class TechnicianDashboard {
                     <div class="header-content">
                         <!-- Logo Section -->
                         <div class="logo-section">
-                            <div class="logo"></div>
+                            <img src="icons/icon.png" class="logo"/>
                             <h1 class="app-title">NetisTrackGh</h1>
                         </div>
 

@@ -149,9 +149,32 @@ class NetisTrackApp {
         try {
             // Show loading state
             mainContent.innerHTML = `
-                <div class="loading-container">
-                    <div class="loading-spinner"></div>
-                    <p class="loading-text">Loading ${hash}...</p>
+                <div class="loading-container" id="loading-screen">
+                    <div class="logo-container">
+                        <!-- Splash Effect -->
+                        <div class="logo-splash"></div>
+                
+                        <!-- Splash Particles -->
+                        <div class="splash-particle"></div>
+                        <div class="splash-particle"></div>
+                        <div class="splash-particle"></div>
+                        <div class="splash-particle"></div>
+                        <div class="splash-particle"></div>
+                        <div class="splash-particle"></div>
+                        <div class="splash-particle"></div>
+                        <div class="splash-particle"></div>
+                
+                        <img src="icons/icon.png" alt="NetisTrackGh Logo" class="app-logo" id="app-logo">
+                    </div>
+                
+                    <p class="loading-text" id="loading-text">Loading ${hash}...</p>
+                
+                    <!-- Optional loading dots -->
+                    <div class="loading-dots">
+                        <div class="loading-dot"></div>
+                        <div class="loading-dot"></div>
+                        <div class="loading-dot"></div>
+                    </div>
                 </div>
             `;
 
@@ -330,8 +353,55 @@ if ('serviceWorker' in navigator) {
 
 // Initialize the application when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
+    const loadingScreen = document.getElementById('loading-screen');
+    const appLogo = document.getElementById('app-logo');
+    const loadingText = document.getElementById('loading-text');
+    
+    // Animate text character by character
+    if (loadingText) {
+        const text = loadingText.textContent;
+        loadingText.innerHTML = text.split('').map(char => 
+            `<span>${char}</span>`
+        ).join('');
+    }
+    
+    // Add pulsing animation to logo after initial drop
+    setTimeout(() => {
+        if (appLogo) {
+            appLogo.style.animation = 'logoPulse 2s ease-in-out infinite';
+        }
+    }, 2200);
+    
+    // Set particle directions (optional - for more dynamic effect)
+    const particles = document.querySelectorAll('.splash-particle');
+    const directions = [
+        { x: 0, y: -1 },   // up
+        { x: 1, y: 0 },    // right
+        { x: 0, y: 1 },    // down
+        { x: -1, y: 0 },   // left
+        { x: -0.7, y: -0.7 }, // top-left
+        { x: 0.7, y: -0.7 },  // top-right
+        { x: 0.7, y: 0.7 },   // bottom-right
+        { x: -0.7, y: 0.7 }   // bottom-left
+    ];
+    
+    particles.forEach((particle, index) => {
+        if (directions[index]) {
+            particle.style.setProperty('--tx', directions[index].x);
+            particle.style.setProperty('--ty', directions[index].y);
+        }
+    });
     console.log('🏁 DOM Content Loaded - Starting NetisTrackGh App');
     window.netisTrackApp = new NetisTrackApp();
+
+    // Optional: Simulate loading completion
+    setTimeout(() => {
+        document.getElementById('loading-screen').classList.add('fade-out');
+        setTimeout(() => {
+            document.getElementById('loading-screen').style.display = 'none';
+            document.getElementById('main-content').style.display = 'block';
+        }, 500);
+    }, 5000); // 
 });
 
 // Make app available globally for navigation

@@ -35,7 +35,7 @@ export const authService = {
     // ============================
     // LOGIN (BACKEND ONLY)
     // ============================
-    async login(email, password, rememberMe = false) {
+    async login(email, password, rememberMe = true) {
         try {
             console.log('🔐 Login attempt:', email);
             

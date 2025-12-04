@@ -4,7 +4,15 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg,
+      #72a7cc 0%,
+      #708ae0 25%,
+      #6a68df 50%,
+      #424ccf 75%,
+      #0000ff 100%
+    );
+  background-size: 400% 400%;
+  animation: gradientShift 5s ease infinite;
   padding: 20px;
   position: relative;
   overflow: hidden;
@@ -17,22 +25,79 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background:
-    radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
-    radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.2) 0%, transparent 50%),
-    radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.2) 0%, transparent 50%);
-  animation: float 6s ease-in-out infinite;
+  background-image:
+    radial-gradient(circle at 15% 50%, rgba(33, 150, 243, 0.08) 0%, transparent 55%),
+    radial-gradient(circle at 85% 30%, rgba(33, 150, 243, 0.08) 0%, transparent 55%),
+    radial-gradient(circle at 50% 80%, rgba(144, 202, 249, 0.12) 0%, transparent 65%);
+  animation: gentleFloat 10s ease-in-out infinite;
+  z-index: 0;
 }
 
-@keyframes float {
+.auth-container::after {
+  content: '';
+  position: absolute;
+  top: 0%;
+  left: 0%;
+  width: 100%;
+  height: 100%;
+  background-image:
+    radial-gradient(20px 20px at 5% 15%, rgba(33, 150, 243, 0.5) 50%, transparent),
+    radial-gradient(10px 10px at 90% 70%, rgba(33, 150, 243, 0.5) 50%, transparent),
+    radial-gradient(8px 8px at 85% 40%, rgba(33, 150, 243, 0.5) 50%, transparent),
+    radial-gradient(15px 15px at 80% 90%, rgba(33, 150, 243, 0.5) 50%, transparent),
+    radial-gradient(5px 5px at 10% 85%, rgba(33, 150, 243, 0.5) 50%, transparent);
+  background-repeat: repeat;
+  animation: floatParticles 3s linear infinite;
+  z-index: 0;
+}
 
-  0%,
-  100% {
-    transform: translateY(0px) rotate(0deg);
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
   }
 
   50% {
-    transform: translateY(-10px) rotate(1deg);
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes floatParticles {
+  0% {
+    transform: translateY(0) translateX(0);
+  }
+
+  100% {
+    transform: translateY(-100px) translateX(100px);
+  }
+}
+
+@keyframes gentleFloat {
+  0% {
+    transform:
+      translate(0, 0) rotate(0deg);
+    opacity: 0.7;
+  }
+
+  33% {
+    transform:
+      translate(calc(20px + 2%), calc(30px + 1%)) rotate(3deg);
+    opacity: 0.9;
+  }
+
+  66% {
+    transform:
+      translate(calc(-15px - 1%), calc(45px + 2%)) rotate(-2deg);
+    opacity: 0.8;
+  }
+
+  100% {
+    transform:
+      translate(0, 0) rotate(0deg);
+    opacity: 0.7;
   }
 }
 
@@ -496,7 +561,7 @@
 }
 
 /* Dark mode support */
-@media (prefers-color-scheme: dark) {
+/* @media (prefers-color-scheme: dark) {
   .auth-card {
     background: rgba(45, 55, 72, 0.95);
     border-color: rgba(74, 85, 104, 0.3);
@@ -534,4 +599,4 @@
   .auth-divider span {
     background: rgba(45, 55, 72, 0.95);
   }
-}
+} */

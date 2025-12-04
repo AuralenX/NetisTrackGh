@@ -78,7 +78,7 @@ export class RequestAccount {
 
         return new Promise((resolve, reject) => {
             if (typeof emailjs === 'undefined') {
-                showAlert('Email service not available. Please refresh the page.', 'error');
+                // showAlert('Email service not available. Please refresh the page.', 'error');
                 reject(new Error('EmailJS not loaded'));
                 return;
             }
@@ -91,7 +91,7 @@ export class RequestAccount {
                 resolve(true);
             } catch (error) {
                 console.error('EmailJS initialization failed:', error);
-                showAlert('Failed to initialize email service.', 'error');
+                // showAlert('Failed to initialize email service.', 'error');
                 reject(error);
             }
         });
@@ -455,7 +455,7 @@ export class RequestAccount {
         this.isSubmitting = true;
 
         if (!this.emailjsInitialized) {
-            showAlert('Email service not ready. Please try again.', 'error');
+            // showAlert('Email service not ready. Please try again.', 'error');
             this.isSubmitting = false;
             return;
         }
@@ -468,7 +468,7 @@ export class RequestAccount {
         const isJustificationValid = this.validateJustificationField();
 
         if (!isNameValid || !isEmailValid || !isPhoneValid || !isRoleValid || !isJustificationValid) {
-            showAlert('Please fix all errors in the form', 'error');
+            // showAlert('Please fix all errors in the form', 'error');
             this.isSubmitting = false;
             return;
         }
@@ -488,7 +488,7 @@ export class RequestAccount {
             console.log('✅ Account request submitted successfully:', response);
             console.log('📧 EmailJS response:', response);
             
-            showAlert('Account request submitted successfully! An admin will contact you soon.', 'success', 8000);
+            // showAlert('Account request submitted successfully! An admin will contact you soon.', 'success', 8000);
             
             // Clear form
             document.getElementById('requestAccountForm').reset();
@@ -508,7 +508,7 @@ export class RequestAccount {
         }
     }
 
-    async getFormData() {
+    getFormData() {
         const phone = document.getElementById('phoneNumber').value.trim();
         
         return {
@@ -529,7 +529,7 @@ export class RequestAccount {
                 hour: '2-digit',
                 minute: '2-digit'
             }),
-            ipAddress: await this.getClientIP() || 'Not captured'
+            ipAddress: "unknown"|| 'Not captured'
         };
     }
 
@@ -631,7 +631,7 @@ export class RequestAccount {
             }
         }
 
-        showAlert(message, 'error');
+        // showAlert(message, 'error');
     }
 
     navigateToLogin() {

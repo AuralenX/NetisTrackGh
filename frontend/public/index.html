@@ -29,14 +29,48 @@
 
 <body>
   <div id="app">
+    <!-- Splash/Loading Screen -->
+    <div class="loading-container" id="loading-screen">
+      <div class="logo-container">
+        <!-- Splash Effect -->
+        <div class="logo-splash"></div>
+  
+        <!-- Splash Particles -->
+        <div class="splash-particle"></div>
+        <div class="splash-particle"></div>
+        <div class="splash-particle"></div>
+        <div class="splash-particle"></div>
+        <div class="splash-particle"></div>
+        <div class="splash-particle"></div>
+        <div class="splash-particle"></div>
+        <div class="splash-particle"></div>
+  
+        <img src="icons/icon.png" alt="NetisTrackGh Logo" class="app-logo" id="app-logo">
+      </div>
+  
+      <p class="loading-text" id="loading-text">Loading NetisTrackGh...</p>
+  
+      <!-- Optional loading dots -->
+      <div class="loading-dots">
+        <div class="loading-dot"></div>
+        <div class="loading-dot"></div>
+        <div class="loading-dot"></div>
+      </div>
+    </div>
+  
     <!-- Main content area where pages are rendered -->
+    <main id="main-content" style="display: none;">
+      <!-- Your app content here -->
+    </main>
+  </div>
+  <!-- <div id="app">
     <main id="main-content">
       <div class="loading-container">
         <div class="loading-spinner"></div>
         <p class="loading-text">Loading NetisTrackGh...</p>
       </div>
     </main>
-  </div>
+  </div> -->
 
   <!-- Main Application Script -->
   <script src="src/services/authService.js"></script>

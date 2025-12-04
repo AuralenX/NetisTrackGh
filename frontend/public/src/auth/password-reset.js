@@ -134,7 +134,7 @@ export class PasswordReset {
         const isEmailValid = this.validateEmailField();
 
         if (!isEmailValid) {
-            showAlert('Please fix the email error', 'error');
+            // showAlert('Please fix the email error', 'error');
             return;
         }
 
@@ -146,7 +146,6 @@ export class PasswordReset {
             
             console.log('Password reset email sent to:', email);
             
-            showAlert('Password reset link sent! Check your email inbox.', 'success', 6000);
             
             // Clear form
             document.getElementById('passwordResetForm').reset();

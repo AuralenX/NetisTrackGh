@@ -7,5 +7,8 @@ netistrackgh.json
 # Node modules
 node_modules/
 
-# logs
+# logs 
+logs/
+*.log
 logs/*.log
+npm-debug.log*

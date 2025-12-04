@@ -91,7 +91,6 @@ export class RequestAccount {
                 resolve(true);
             } catch (error) {
                 console.error('EmailJS initialization failed:', error);
-                // showAlert('Failed to initialize email service.', 'error');
                 reject(error);
             }
         });
@@ -455,7 +454,6 @@ export class RequestAccount {
         this.isSubmitting = true;
 
         if (!this.emailjsInitialized) {
-            // showAlert('Email service not ready. Please try again.', 'error');
             this.isSubmitting = false;
             return;
         }
@@ -468,7 +466,7 @@ export class RequestAccount {
         const isJustificationValid = this.validateJustificationField();
 
         if (!isNameValid || !isEmailValid || !isPhoneValid || !isRoleValid || !isJustificationValid) {
-            // showAlert('Please fix all errors in the form', 'error');
+            showAlert('Please fix all errors in the form', 'error');
             this.isSubmitting = false;
             return;
         }
@@ -487,9 +485,7 @@ export class RequestAccount {
             
             console.log('✅ Account request submitted successfully:', response);
             console.log('📧 EmailJS response:', response);
-            
-            // showAlert('Account request submitted successfully! An admin will contact you soon.', 'success', 8000);
-            
+                        
             // Clear form
             document.getElementById('requestAccountForm').reset();
             
@@ -614,9 +610,7 @@ export class RequestAccount {
         console.error('EmailJS error details:', error);
         
         const errorMessages = {
-            'INVALID_PUBLIC_KEY': 'Email service configuration error',
             'SERVICE_NOT_AVAILABLE': 'Email service temporarily unavailable',
-            'TEMPLATE_NOT_FOUND': 'Email template not found',
             'NETWORK_ERROR': 'Network error. Please check your connection'
         };
 
@@ -631,7 +625,7 @@ export class RequestAccount {
             }
         }
 
-        // showAlert(message, 'error');
+        showAlert(message, 'error');
     }
 
     navigateToLogin() {

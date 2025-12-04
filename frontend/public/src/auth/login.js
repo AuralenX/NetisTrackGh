@@ -31,7 +31,6 @@ export class Login {
             const isAuthenticated = await authService.isAuthenticated();
             if (isAuthenticated) {
                 console.log('🔄 User already authenticated, redirecting to dashboard...');
-                showAlert('Welcome back! Redirecting...', 'success', 1500);
                 
                 setTimeout(() => {
                     authService.redirectBasedOnRole();
@@ -306,7 +305,6 @@ export class Login {
         const loginButton = document.getElementById('loginButton');
 
         if (!email || !password || !loginButton) {
-            // showAlert('Form elements not found. Please refresh the page.', 'error');
             this.isProcessingLogin = false;
             return;
         }
@@ -316,7 +314,6 @@ export class Login {
         const isPasswordValid = this.validatePasswordField();
 
         if (!isEmailValid || !isPasswordValid) {
-            // showAlert('Please fix the errors in the form before submitting.', 'error');
             this.isProcessingLogin = false;
             return;
         }
@@ -362,7 +359,6 @@ export class Login {
             welcomeMessage = `Welcome back, ${userName}!`;
         }
         
-        // showAlert(welcomeMessage, 'success', 3000);
         
         // Update UI with success state
         const loginForm = document.getElementById('loginForm');
@@ -427,9 +423,6 @@ export class Login {
             `;
         }
 
-        // Also show global alert
-        // showAlert(message, 'error', 5000);
-
         // Highlight problematic fields
         this.highlightErrorFields(error);
     }
@@ -454,11 +447,6 @@ export class Login {
                 passwordInput.focus();
                 passwordInput.select();
             }
-        }
-        
-        // Network errors
-        if (errorCode === 'auth/network-request-failed' || errorCode === 'Failed to fetch') {
-            // showAlert('Please check your internet connection and try again.', 'warning', 5000);
         }
     }
 

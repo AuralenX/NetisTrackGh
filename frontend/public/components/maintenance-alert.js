@@ -4,6 +4,7 @@ export class MaintenanceAlert {
     constructor(alertData) {
         this.alertData = alertData;
         this.element = null;
+        this.eventHandlers = {};
     }
 
     render() {
@@ -11,31 +12,19 @@ export class MaintenanceAlert {
             id,
             siteId,
             siteName,
-            alertType,
-            severity,
+            alertType = 'maintenance',
+            severity = 'medium',
             message,
             dueDate,
             remainingHours,
-            maintenanceType,
+            maintenanceType = 'preventive',
             createdAt,
             acknowledged = false
         } = this.alertData;
 
-        const severityColors = {
-            critical: { bg: '#fed7d7', text: '#c53030', icon: '🔴', label: 'CRITICAL' },
-            high: { bg: '#feebc8', text: '#dd6b20', icon: '⚠️', label: 'HIGH' },
-            medium: { bg: '#fefcbf', text: '#d69e2e', icon: '⚠️', label: 'MEDIUM' },
-            low: { bg: '#c6f6d5', text: '#276749', icon: 'ℹ️', label: 'LOW' }
-        };
-
-        const maintenanceTypes = {
-            preventive: 'Preventive Maintenance',
-            corrective: 'Corrective Maintenance',
-            emergency: 'Emergency Repair',
-            routine: 'Routine Check'
-        };
-
-        const severityInfo = severityColors[severity] || severityColors.medium;
+        const severityInfo = this.getSeverityInfo(severity);
+        const maintenanceInfo = this.getMaintenanceInfo(maintenanceType);
+        const timeInfo = this.getTimeInfo(remainingHours);
 
         return `
             <div class="maintenance-alert ${severity} ${acknowledged ? 'acknowledged' : ''}" 
@@ -43,58 +32,61 @@ export class MaintenanceAlert {
                  data-site-id="${siteId}">
                 
                 <!-- Alert Header -->
-                <div class="alert-header">
-                    <div class="alert-severity" style="background: ${severityInfo.bg}; color: ${severityInfo.text};">
-                        <span class="severity-icon">${severityInfo.icon}</span>
+                <div class="alert-header" style="background: ${severityInfo.bg}; color: ${severityInfo.text};">
+                    <div class="alert-severity">
+                        <i class="fas ${severityInfo.icon}"></i>
                         <span class="severity-label">${severityInfo.label}</span>
                     </div>
                     
+                    ${!acknowledged ? `
                     <div class="alert-actions">
-                        ${!acknowledged ? `
                         <button class="action-btn acknowledge-btn" title="Mark as Acknowledged">
-                            <span class="btn-icon">✅</span>
-                        </button>
-                        ` : ''}
-                        
-                        <button class="action-btn details-btn" title="View Details">
-                            <span class="btn-icon">👁️</span>
+                            <i class="fas fa-check"></i>
                         </button>
                     </div>
+                    ` : ''}
                 </div>
 
                 <!-- Alert Body -->
                 <div class="alert-body">
                     <!-- Site Information -->
                     <div class="site-info">
-                        <h4 class="site-name">${siteName}</h4>
-                        <span class="site-id">Site ID: ${siteId}</span>
+                        <div class="site-icon">
+                            <i class="fas fa-tower-cell"></i>
+                        </div>
+                        <div class="site-details">
+                            <h4 class="site-name">${siteName}</h4>
+                            <span class="site-id">Site #${siteId}</span>
+                        </div>
                     </div>
 
                     <!-- Alert Message -->
                     <div class="alert-message">
-                        <p>${message}</p>
+                        <p><i class="fas fa-exclamation-circle"></i> ${message}</p>
                     </div>
 
                     <!-- Maintenance Details -->
                     <div class="maintenance-details">
                         <div class="detail-item">
+                            <i class="fas ${maintenanceInfo.icon}"></i>
                             <span class="detail-label">Type:</span>
-                            <span class="detail-value">${maintenanceTypes[maintenanceType] || maintenanceType}</span>
+                            <span class="detail-value">${maintenanceInfo.label}</span>
                         </div>
                         
                         ${dueDate ? `
                         <div class="detail-item">
-                            <span class="detail-label">Due Date:</span>
+                            <i class="far fa-calendar-alt"></i>
+                            <span class="detail-label">Due:</span>
                             <span class="detail-value">${formatDate(dueDate)}</span>
                         </div>
                         ` : ''}
                         
                         ${remainingHours !== undefined ? `
                         <div class="detail-item">
-                            <span class="detail-label">Remaining Hours:</span>
-                            <span class="detail-value ${remainingHours <= 0 ? 'overdue' : ''}">
-                                ${remainingHours}h
-                                ${remainingHours <= 0 ? '(OVERDUE)' : ''}
+                            <i class="far fa-clock"></i>
+                            <span class="detail-label">Time Left:</span>
+                            <span class="detail-value ${timeInfo.class}">
+                                ${timeInfo.text}
                             </span>
                         </div>
                         ` : ''}
@@ -102,13 +94,15 @@ export class MaintenanceAlert {
 
                     <!-- Time Information -->
                     <div class="time-info">
-                        <span class="created-at">
-                            Alert generated: ${formatDateTime(createdAt)}
-                        </span>
+                        <div class="created-at">
+                            <i class="far fa-calendar"></i>
+                            <span>${formatDateTime(createdAt)}</span>
+                        </div>
                         ${acknowledged ? `
-                        <span class="acknowledged-badge">
-                            ✅ Acknowledged
-                        </span>
+                        <div class="acknowledged-badge">
+                            <i class="fas fa-check-circle"></i>
+                            <span>Acknowledged</span>
+                        </div>
                         ` : ''}
                     </div>
                 </div>
@@ -118,24 +112,92 @@ export class MaintenanceAlert {
                     <div class="alert-actions-full">
                         ${!acknowledged ? `
                         <button class="action-btn-full schedule-btn" data-action="schedule">
-                            <span class="btn-icon">📅</span>
-                            <span class="btn-text">Schedule Maintenance</span>
+                            <i class="far fa-calendar-plus"></i>
+                            <span>Schedule</span>
                         </button>
                         ` : ''}
                         
                         <button class="action-btn-full log-btn" data-action="log">
-                            <span class="btn-icon">📝</span>
-                            <span class="btn-text">Log Maintenance</span>
+                            <i class="fas fa-clipboard-check"></i>
+                            <span>Log Now</span>
                         </button>
                         
                         <button class="action-btn-full view-site-btn" data-action="viewSite">
-                            <span class="btn-icon">🏢</span>
-                            <span class="btn-text">View Site</span>
+                            <i class="fas fa-external-link-alt"></i>
+                            <span>View Site</span>
                         </button>
                     </div>
                 </div>
             </div>
         `;
+    }
+
+    getSeverityInfo(severity) {
+        const severities = {
+            critical: {
+                bg: '#fed7d7',
+                text: '#c53030',
+                icon: 'fa-exclamation-triangle',
+                label: 'CRITICAL'
+            },
+            high: {
+                bg: '#feebc8',
+                text: '#dd6b20',
+                icon: 'fa-exclamation-circle',
+                label: 'HIGH'
+            },
+            medium: {
+                bg: '#fefcbf',
+                text: '#d69e2e',
+                icon: 'fa-exclamation',
+                label: 'MEDIUM'
+            },
+            low: {
+                bg: '#c6f6d5',
+                text: '#276749',
+                icon: 'fa-info-circle',
+                label: 'LOW'
+            }
+        };
+        return severities[severity] || severities.medium;
+    }
+
+    getMaintenanceInfo(type) {
+        const types = {
+            preventive: {
+                icon: 'fa-shield-alt',
+                label: 'Preventive'
+            },
+            corrective: {
+                icon: 'fa-wrench',
+                label: 'Corrective'
+            },
+            emergency: {
+                icon: 'fa-ambulance',
+                label: 'Emergency'
+            },
+            routine: {
+                icon: 'fa-clipboard-check',
+                label: 'Routine'
+            }
+        };
+        return types[type] || { icon: 'fa-tools', label: type };
+    }
+
+    getTimeInfo(hours) {
+        if (hours === undefined || hours === null) {
+            return { text: 'N/A', class: '' };
+        }
+        
+        if (hours <= 0) {
+            return { text: 'OVERDUE', class: 'overdue' };
+        } else if (hours <= 24) {
+            return { text: `${hours}h (Urgent)`, class: 'urgent' };
+        } else if (hours <= 72) {
+            return { text: `${Math.floor(hours/24)} days`, class: 'warning' };
+        } else {
+            return { text: `${Math.floor(hours/24)} days`, class: '' };
+        }
     }
 
     attachEvents() {
@@ -147,79 +209,54 @@ export class MaintenanceAlert {
         // Acknowledge button
         const acknowledgeBtn = this.element.querySelector('.acknowledge-btn');
         if (acknowledgeBtn) {
-            acknowledgeBtn.addEventListener('click', (e) => {
+            const handler = (e) => {
                 e.stopPropagation();
-                this.onAcknowledge();
-            });
-        }
-
-        // Details button
-        const detailsBtn = this.element.querySelector('.details-btn');
-        if (detailsBtn) {
-            detailsBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                this.onViewDetails();
-            });
+                this.handleAction('acknowledge');
+            };
+            acknowledgeBtn.addEventListener('click', handler);
+            this.eventHandlers.acknowledgeBtn = handler;
         }
 
         // Action buttons
-        const actionButtons = this.element.querySelectorAll('.action-btn-full');
-        actionButtons.forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const action = btn.dataset.action;
-                this.onAction(action);
-            });
+        const actions = ['schedule', 'log', 'viewSite'];
+        actions.forEach(action => {
+            const btn = this.element.querySelector(`.${action}-btn`);
+            if (btn) {
+                const handler = (e) => {
+                    e.stopPropagation();
+                    this.handleAction(action);
+                };
+                btn.addEventListener('click', handler);
+                this.eventHandlers[`${action}Btn`] = handler;
+            }
         });
 
         // Whole alert click
-        this.element.addEventListener('click', (e) => {
+        const alertHandler = (e) => {
             if (!e.target.closest('.action-btn') && !e.target.closest('.action-btn-full')) {
-                this.onViewDetails();
+                this.handleAction('details');
             }
-        });
+        };
+        this.element.addEventListener('click', alertHandler);
+        this.eventHandlers.alertClick = alertHandler;
     }
 
-    onAcknowledge() {
-        console.log('✅ Acknowledge alert:', this.alertData.id);
-        
-        // Dispatch custom event
-        window.dispatchEvent(new CustomEvent('maintenanceAlertAcknowledge', {
-            detail: { alertId: this.alertData.id }
-        }));
-
-        // Update UI
-        if (this.element) {
-            this.element.classList.add('acknowledged');
-            const acknowledgeBtn = this.element.querySelector('.acknowledge-btn');
-            if (acknowledgeBtn) {
-                acknowledgeBtn.remove();
-            }
-        }
-    }
-
-    onViewDetails() {
-        console.log('🔍 View alert details:', this.alertData.id);
-        window.dispatchEvent(new CustomEvent('maintenanceAlertViewDetails', {
-            detail: { alertId: this.alertData.id }
-        }));
-    }
-
-    onAction(action) {
-        console.log(`🔧 Alert action: ${action} for alert:`, this.alertData.id);
-        
-        const eventMap = {
+    handleAction(action) {
+        const events = {
+            'acknowledge': 'maintenanceAlertAcknowledge',
             'schedule': 'maintenanceAlertSchedule',
             'log': 'maintenanceAlertLog',
-            'viewSite': 'maintenanceAlertViewSite'
+            'viewSite': 'maintenanceAlertViewSite',
+            'details': 'maintenanceAlertViewDetails'
         };
 
-        if (eventMap[action]) {
-            window.dispatchEvent(new CustomEvent(eventMap[action], {
+        if (events[action]) {
+            window.dispatchEvent(new CustomEvent(events[action], {
                 detail: { 
                     alertId: this.alertData.id,
                     siteId: this.alertData.siteId,
-                    siteName: this.alertData.siteName
+                    siteName: this.alertData.siteName,
+                    alertData: this.alertData
                 }
             }));
         }
@@ -233,7 +270,24 @@ export class MaintenanceAlert {
         }
     }
 
+    removeEvents() {
+        if (this.element) {
+            Object.values(this.eventHandlers).forEach(handler => {
+                if (handler) {
+                    this.element.removeEventListener('click', handler);
+                }
+            });
+            
+            const buttons = this.element.querySelectorAll('.action-btn, .action-btn-full');
+            buttons.forEach(btn => {
+                btn.replaceWith(btn.cloneNode(true));
+            });
+        }
+        this.eventHandlers = {};
+    }
+
     destroy() {
+        this.removeEvents();
         if (this.element) {
             this.element.remove();
             this.element = null;
@@ -246,15 +300,16 @@ export const maintenanceAlertStyles = `
 .maintenance-alert {
     background: white;
     border-radius: 12px;
-    border: 1px solid #e2e8f0;
     overflow: hidden;
-    margin-bottom: 12px;
+    margin-bottom: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     transition: all 0.3s ease;
+    border: 1px solid #e2e8f0;
 }
 
 .maintenance-alert:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
 }
 
 .maintenance-alert.acknowledged {
@@ -262,41 +317,25 @@ export const maintenanceAlertStyles = `
     border-color: #c6f6d5;
 }
 
-.maintenance-alert.critical {
-    border-left: 4px solid #e53e3e;
-}
-
-.maintenance-alert.high {
-    border-left: 4px solid #ed8936;
-}
-
-.maintenance-alert.medium {
-    border-left: 4px solid #ecc94b;
-}
-
-.maintenance-alert.low {
-    border-left: 4px solid #38a169;
-}
-
 .alert-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 12px 16px;
-    border-bottom: 1px solid #e2e8f0;
-    background: #f7fafc;
 }
 
 .alert-severity {
-    display: inline-flex;
+    display: flex;
     align-items: center;
-    gap: 6px;
-    padding: 4px 12px;
-    border-radius: 20px;
-    font-size: 12px;
+    gap: 8px;
     font-weight: 600;
+    font-size: 13px;
     text-transform: uppercase;
     letter-spacing: 0.05em;
+}
+
+.alert-severity i {
+    font-size: 16px;
 }
 
 .alert-actions {
@@ -310,13 +349,14 @@ export const maintenanceAlertStyles = `
     padding: 6px;
     border-radius: 6px;
     cursor: pointer;
-    color: #4a5568;
+    color: inherit;
     transition: all 0.3s ease;
+    font-size: 14px;
 }
 
 .action-btn:hover {
-    background: #edf2f7;
-    color: #667eea;
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.1);
 }
 
 .alert-body {
@@ -324,7 +364,26 @@ export const maintenanceAlertStyles = `
 }
 
 .site-info {
-    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.site-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 18px;
+}
+
+.site-details {
+    flex: 1;
 }
 
 .site-name {
@@ -344,6 +403,10 @@ export const maintenanceAlertStyles = `
 
 .alert-message {
     margin-bottom: 16px;
+    padding: 12px;
+    background: #f7fafc;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
 }
 
 .alert-message p {
@@ -351,6 +414,14 @@ export const maintenanceAlertStyles = `
     color: #4a5568;
     font-size: 14px;
     line-height: 1.5;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.alert-message i {
+    color: #667eea;
+    margin-top: 2px;
 }
 
 .maintenance-details {
@@ -366,24 +437,40 @@ export const maintenanceAlertStyles = `
 
 .detail-item {
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    gap: 8px;
+    font-size: 13px;
+}
+
+.detail-item i {
+    color: #667eea;
+    width: 16px;
+    text-align: center;
 }
 
 .detail-label {
     font-weight: 600;
     color: #4a5568;
-    font-size: 12px;
 }
 
 .detail-value {
     color: #2d3748;
     font-weight: 500;
-    font-size: 13px;
+    margin-left: auto;
 }
 
 .detail-value.overdue {
     color: #e53e3e;
+    font-weight: 600;
+}
+
+.detail-value.urgent {
+    color: #ed8936;
+    font-weight: 600;
+}
+
+.detail-value.warning {
+    color: #ecc94b;
     font-weight: 600;
 }
 
@@ -394,14 +481,24 @@ export const maintenanceAlertStyles = `
     font-size: 11px;
     color: #a0aec0;
     margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #e2e8f0;
+}
+
+.created-at {
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
 
 .acknowledged-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
     background: #c6f6d5;
     color: #276749;
-    padding: 2px 8px;
+    padding: 4px 8px;
     border-radius: 4px;
-    font-size: 10px;
     font-weight: 600;
 }
 
@@ -414,12 +511,10 @@ export const maintenanceAlertStyles = `
 .alert-actions-full {
     display: flex;
     gap: 8px;
-    flex-wrap: wrap;
 }
 
 .action-btn-full {
     flex: 1;
-    min-width: 120px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -442,6 +537,10 @@ export const maintenanceAlertStyles = `
     transform: translateY(-2px);
 }
 
+.action-btn-full i {
+    font-size: 14px;
+}
+
 @media (max-width: 640px) {
     .maintenance-details {
         grid-template-columns: 1fr;
@@ -452,7 +551,13 @@ export const maintenanceAlertStyles = `
     }
     
     .action-btn-full {
-        min-width: 100%;
+        width: 100%;
+    }
+    
+    .time-info {
+        flex-direction: column;
+        gap: 8px;
+        align-items: flex-start;
     }
 }
 `;

@@ -3,6 +3,7 @@ class NetisTrackApp {
     constructor() {
         this.currentPage = null;
         this.isInitialized = false;
+        this.pageInstances = new Map(); // Store page instances
         this.init();
     }
 
@@ -154,8 +155,32 @@ class NetisTrackApp {
                 </div>
             `;
 
-            // Clear current page
-            if (this.currentPage && typeof this.currentPage.destroy === 'function') {
+            // Use existing page instance if available
+            let pageInstance = this.pageInstances.get(hash);
+            
+            if (pageInstance) {
+                console.log('♻️ Reusing existing page instance for:', hash);
+                this.currentPage = pageInstance;
+                
+                // Render the existing instance
+                mainContent.innerHTML = pageInstance.render();
+                setTimeout(() => {
+                    if (typeof pageInstance.attachEvents === 'function') {
+                        // Detach old events first
+                        if (typeof pageInstance.detachEvents === 'function') {
+                            pageInstance.detachEvents();
+                        }
+                        pageInstance.attachEvents();
+                    }
+                }, 50);
+                return;
+            }
+
+            // Clear current page if it's different from new route
+            if (this.currentPage && 
+                this.currentPage.constructor.name.toLowerCase() !== hash.replace('-', '') &&
+                typeof this.currentPage.destroy === 'function') {
+                console.log('🧹 Destroying previous page:', this.currentPage.constructor.name);
                 this.currentPage.destroy();
             }
 
@@ -172,35 +197,34 @@ class NetisTrackApp {
         console.log('📂 Loading page module for:', route);
         
         try {
+            let PageClass;
             let pageModule;
 
             // Use correct relative paths from public/js/
             switch (route) {
                 case 'login':
                     pageModule = await import('../src/auth/login.js');
-                    this.currentPage = new pageModule.Login();
+                    PageClass = pageModule.Login;
                     break;
                     
                 case 'password-reset':
                     pageModule = await import('../src/auth/password-reset.js');
-                    this.currentPage = new pageModule.PasswordReset();
+                    PageClass = pageModule.PasswordReset;
                     break;
                     
                 case 'request-account':
                     pageModule = await import('../src/auth/register.js');
-                    this.currentPage = new pageModule.RequestAccount();
+                    PageClass = pageModule.RequestAccount;
                     break;
                     
-                 case 'dashboard':
-                    // Load the actual Technician Dashboard
+                case 'dashboard':
                     pageModule = await import('../src/dashboard/main.js');
-                    this.currentPage = new pageModule.TechnicianDashboard();
+                    PageClass = pageModule.TechnicianDashboard;
                     break;
                     
                 case 'analytics':
-                    // We'll implement this later for supervisors/admins
                     pageModule = await import('../src/dashboard/analytics.js');
-                    this.currentPage = new pageModule.AnalyticsDashboard();
+                    PageClass = pageModule.AnalyticsDashboard;
                     break;
                     
                 default:
@@ -224,19 +248,29 @@ class NetisTrackApp {
                         `,
                         attachEvents: () => {}
                     };
+                    container.innerHTML = this.currentPage.render();
+                    return;
             }
 
+            // Create new page instance
+            console.log('🏗️ Creating new page instance for:', route);
+            const pageInstance = new PageClass();
+            
+            // Store the instance for reuse
+            this.pageInstances.set(route, pageInstance);
+            this.currentPage = pageInstance;
+
             // Render the page
-            if (this.currentPage && typeof this.currentPage.render === 'function') {
+            if (pageInstance && typeof pageInstance.render === 'function') {
                 console.log('🎨 Rendering page:', route);
-                container.innerHTML = this.currentPage.render();
+                container.innerHTML = pageInstance.render();
                 
                 // Attach event listeners if the method exists
-                if (typeof this.currentPage.attachEvents === 'function') {
+                if (typeof pageInstance.attachEvents === 'function') {
                     console.log('🔗 Attaching events for:', route);
                     // Small timeout to ensure DOM is ready
                     setTimeout(() => {
-                        this.currentPage.attachEvents();
+                        pageInstance.attachEvents();
                     }, 50);
                 }
             }

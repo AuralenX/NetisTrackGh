@@ -4,6 +4,7 @@ import { authService } from '../services/authService.js';
 export class Login {
     constructor() {
         this.isInitialized = false;
+        this.eventHandlers = new Map(); // Track event handlers
         this.init();
     }
 
@@ -13,8 +14,12 @@ export class Login {
         try {
             // Check if user is already authenticated
             await this.checkExistingAuth();
-            this.isInitialized = true;
-            console.log('✅ Login component initialized');
+            
+            // Only proceed if not initialized
+            if (!this.isInitialized) {
+                this.isInitialized = true;
+                console.log('✅ Login component initialized');
+            }
         } catch (error) {
             console.error('❌ Login component initialization failed:', error);
         }
@@ -112,59 +117,110 @@ export class Login {
     }
 
     attachEvents() {
-        console.log('🔗 Attaching login events...');
+    console.log('🔗 Attaching login events...');
+    
+    const loginForm = document.getElementById('loginForm');
+    
+    if (!loginForm) {
+        console.error('❌ Login form not found');
+        return;
+    }
+
+    // ⚠️ CRITICAL FIX: Replace form to clear all previous event listeners
+    const newForm = loginForm.cloneNode(true);
+    loginForm.parentNode.replaceChild(newForm, loginForm);
+    
+    // Now get the new form
+    const form = document.getElementById('loginForm');
+    const loginButton = document.getElementById('loginButton');
+    const forgotPasswordLink = document.getElementById('forgotPasswordLink');
+    const requestAccountLink = document.getElementById('requestAccountLink');
+
+    // SINGLE EVENT LISTENER PATTERN
+    let isProcessing = false;
+    
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        e.stopImmediatePropagation();
         
+        console.log('🖱️ Form submit triggered at:', Date.now());
+        
+        if (isProcessing) {
+            console.log('⏳ Already processing, skipping...');
+            return;
+        }
+        
+        isProcessing = true;
+        
+        try {
+            await this.handleLogin();
+        } finally {
+            // Reset after 2 seconds to prevent rapid clicks
+            setTimeout(() => {
+                isProcessing = false;
+            }, 2000);
+        }
+    };
+    
+    // Attach with {once: true} to ensure it only fires once
+    form.addEventListener('submit', handleSubmit);
+    
+    // Navigation links
+    if (forgotPasswordLink) {
+        const newForgotLink = forgotPasswordLink.cloneNode(true);
+        forgotPasswordLink.parentNode.replaceChild(newForgotLink, forgotPasswordLink);
+        
+        newForgotLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            this.navigateToPasswordReset();
+        });
+    }
+
+    if (requestAccountLink) {
+        const newRequestLink = requestAccountLink.cloneNode(true);
+        requestAccountLink.parentNode.replaceChild(newRequestLink, requestAccountLink);
+        
+        newRequestLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            this.navigateToRequestAccount();
+        });
+    }
+
+    // Real-time validation
+    this.attachRealTimeValidation();
+
+    // Auto-focus email field
+    setTimeout(() => {
+        const emailInput = document.getElementById('loginEmail');
+        if (emailInput) {
+            emailInput.focus();
+        }
+    }, 100);
+
+    console.log('✅ Login events attached successfully');
+}
+
+    detachEvents() {
         const loginForm = document.getElementById('loginForm');
-        const loginButton = document.getElementById('loginButton');
         const forgotPasswordLink = document.getElementById('forgotPasswordLink');
         const requestAccountLink = document.getElementById('requestAccountLink');
 
-        if (!loginForm) {
-            console.error('❌ Login form not found');
-            return;
-        }
-
-        // Form submission
-        loginForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.handleLogin();
-        });
-
-        // Enter key support
-        loginForm.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                this.handleLogin();
-            }
-        });
-
-        // Navigation links
-        if (forgotPasswordLink) {
-            forgotPasswordLink.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.navigateToPasswordReset();
+        if (loginForm && this.eventHandlers.size > 0) {
+            // Remove all stored event listeners
+            this.eventHandlers.forEach((handler, key) => {
+                if (key === 'formSubmit') loginForm.removeEventListener('submit', handler);
+                if (key === 'formKeypress') loginForm.removeEventListener('keypress', handler);
+                if (key === 'forgotPassword' && forgotPasswordLink) {
+                    forgotPasswordLink.removeEventListener('click', handler);
+                }
+                if (key === 'requestAccount' && requestAccountLink) {
+                    requestAccountLink.removeEventListener('click', handler);
+                }
             });
+            
+            this.eventHandlers.clear();
+            console.log('🧹 Previous event listeners removed');
         }
-
-        if (requestAccountLink) {
-            requestAccountLink.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.navigateToRequestAccount();
-            });
-        }
-
-        // Real-time validation
-        this.attachRealTimeValidation();
-
-        // Auto-focus email field
-        setTimeout(() => {
-            const emailInput = document.getElementById('loginEmail');
-            if (emailInput) {
-                emailInput.focus();
-            }
-        }, 100);
-
-        console.log('✅ Login events attached successfully');
     }
 
     attachRealTimeValidation() {
@@ -235,7 +291,15 @@ export class Login {
     }
 
     async handleLogin() {
-        console.log('🔄 Handling login process...');
+        console.log('🔄 Handling login process...', new Date().toISOString());
+        
+        // Check if already processing
+        if (this.isProcessingLogin) {
+            console.log('⏳ Login already in progress, skipping...');
+            return;
+        }
+
+        this.isProcessingLogin = true;
         
         const email = document.getElementById('loginEmail')?.value.trim();
         const password = document.getElementById('loginPassword')?.value;
@@ -243,6 +307,7 @@ export class Login {
 
         if (!email || !password || !loginButton) {
             showAlert('Form elements not found. Please refresh the page.', 'error');
+            this.isProcessingLogin = false;
             return;
         }
 
@@ -252,6 +317,7 @@ export class Login {
 
         if (!isEmailValid || !isPasswordValid) {
             showAlert('Please fix the errors in the form before submitting.', 'error');
+            this.isProcessingLogin = false;
             return;
         }
 
@@ -275,11 +341,13 @@ export class Login {
             // Redirect after delay
             setTimeout(() => {
                 authService.redirectBasedOnRole();
+                this.isProcessingLogin = false; // Reset after redirect
             }, 2000);
 
         } catch (error) {
             console.error('❌ Login failed:', error);
             this.handleLoginError(error);
+            this.isProcessingLogin = false;
         } finally {
             setButtonLoading(loginButton, false);
         }
@@ -407,14 +475,23 @@ export class Login {
     destroy() {
         console.log('🧹 Cleaning up login component...');
         
-        // Remove event listeners if needed
-        const loginForm = document.getElementById('loginForm');
-        if (loginForm) {
-            loginForm.removeEventListener('submit', this.handleLogin);
-            loginForm.removeEventListener('keypress', this.handleEnterKey);
+        // Remove event listeners
+        this.detachEvents();
+        
+        // Clean up real-time validation listeners
+        const emailInput = document.getElementById('loginEmail');
+        const passwordInput = document.getElementById('loginPassword');
+        
+        if (emailInput) {
+            emailInput.replaceWith(emailInput.cloneNode(true));
+        }
+        
+        if (passwordInput) {
+            passwordInput.replaceWith(passwordInput.cloneNode(true));
         }
         
         this.isInitialized = false;
+        this.isProcessingLogin = false;
         console.log('✅ Login component destroyed');
     }
 }

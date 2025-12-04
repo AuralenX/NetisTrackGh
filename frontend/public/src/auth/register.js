@@ -3,6 +3,8 @@ import { showAlert, validateEmail, validatePhone, setButtonLoading } from '../ut
 export class RequestAccount {
     constructor() {
         this.emailjsInitialized = false;
+        this.isSubmitting = false; // Add this flag
+        this.eventHandlers = new Map(); // Track event handlers
         this.init();
     }
 
@@ -10,6 +12,66 @@ export class RequestAccount {
         console.log('RequestAccount component initialized');
         await this.initializeEmailJS();
     }
+    
+    attachEvents() {
+        console.log('Attaching request account events');
+        
+        const requestForm = document.getElementById('requestAccountForm');
+        const requestButton = document.getElementById('requestButton');
+        const backToLoginLink = document.getElementById('backToLoginLink');
+
+        if (!requestForm) {
+            console.error('❌ Request form not found');
+            return;
+        }
+
+        // CLEAR EXISTING EVENT LISTENERS
+        this.detachEvents();
+
+        // Create bound handlers
+        const handleSubmit = async (e) => {
+            e.preventDefault();
+            await this.handleAccountRequest();
+        };
+
+        const handleBackToLogin = (e) => {
+            e.preventDefault();
+            this.navigateToLogin();
+        };
+
+        // Store handlers
+        this.eventHandlers.set('formSubmit', handleSubmit);
+        this.eventHandlers.set('backToLogin', handleBackToLogin);
+
+        // Form submission - add debouncing
+        requestForm.addEventListener('submit', handleSubmit);
+
+        // Navigation link
+        if (backToLoginLink) {
+            backToLoginLink.addEventListener('click', handleBackToLogin);
+        }
+
+        // Add real-time validation
+        this.attachRealTimeValidation();
+    }
+
+    detachEvents() {
+        const requestForm = document.getElementById('requestAccountForm');
+        const backToLoginLink = document.getElementById('backToLoginLink');
+
+        if (requestForm && this.eventHandlers.size > 0) {
+            this.eventHandlers.forEach((handler, key) => {
+                if (key === 'formSubmit') requestForm.removeEventListener('submit', handler);
+                if (key === 'backToLogin' && backToLoginLink) {
+                    backToLoginLink.removeEventListener('click', handler);
+                }
+            });
+            
+            this.eventHandlers.clear();
+            console.log('🧹 Previous event listeners removed');
+        }
+    }
+
 
     async initializeEmailJS() {
         if (this.emailjsInitialized) return true;
@@ -89,6 +151,18 @@ export class RequestAccount {
                         </div>
 
                         <div class="form-group">
+                            <label for="company" class="form-label">Company/Organization</label>
+                            <input 
+                                type="text" 
+                                id="company" 
+                                class="form-input" 
+                                placeholder="Enter your company or organization name"
+                                autocomplete="organization"
+                            >
+                            <div class="error-message" id="companyError" style="display: none; color: #e53e3e; font-size: 12px; margin-top: 4px;"></div>
+                        </div>
+
+                        <div class="form-group">
                             <label for="role" class="form-label">Requested Role</label>
                             <select id="role" class="form-select" required>
                                 <option value="">Select a role</option>
@@ -134,29 +208,65 @@ export class RequestAccount {
     }
 
     attachEvents() {
-        console.log('Attaching request account events');
-        
-        const requestForm = document.getElementById('requestAccountForm');
-        const requestButton = document.getElementById('requestButton');
-        const backToLoginLink = document.getElementById('backToLoginLink');
-
-        if (requestForm) {
-            requestForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                await this.handleAccountRequest();
-            });
-        }
-
-        if (backToLoginLink) {
-            backToLoginLink.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.navigateToLogin();
-            });
-        }
-
-        // Add real-time validation
-        this.attachRealTimeValidation();
+    console.log('Attaching request account events');
+    
+    const requestForm = document.getElementById('requestAccountForm');
+    
+    if (!requestForm) {
+        console.error('❌ Request form not found');
+        return;
     }
+
+    // ⚠️ CRITICAL FIX: Replace form to clear all previous event listeners
+    const newForm = requestForm.cloneNode(true);
+    requestForm.parentNode.replaceChild(newForm, requestForm);
+    
+    // Now get the new form
+    const form = document.getElementById('requestAccountForm');
+    const requestButton = document.getElementById('requestButton');
+    const backToLoginLink = document.getElementById('backToLoginLink');
+
+    // SINGLE EVENT LISTENER PATTERN
+    let isProcessing = false;
+    
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        
+        console.log('🖱️ Request form submit triggered at:', Date.now());
+        
+        if (isProcessing) {
+            console.log('⏳ Already processing, skipping...');
+            return;
+        }
+        
+        isProcessing = true;
+        
+        try {
+            await this.handleAccountRequest();
+        } finally {
+            // Reset after 3 seconds to prevent rapid submissions
+            setTimeout(() => {
+                isProcessing = false;
+            }, 3000);
+        }
+    };
+    
+    form.addEventListener('submit', handleSubmit);
+
+    if (backToLoginLink) {
+        const newBackLink = backToLoginLink.cloneNode(true);
+        backToLoginLink.parentNode.replaceChild(newBackLink, backToLoginLink);
+        
+        newBackLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            this.navigateToLogin();
+        });
+    }
+
+    // Add real-time validation
+    this.attachRealTimeValidation();
+}
 
     attachRealTimeValidation() {
         const nameInput = document.getElementById('fullName');
@@ -334,10 +444,19 @@ export class RequestAccount {
     }
 
     async handleAccountRequest() {
-        console.log('Handling account request...');
+        console.log('Handling account request...', new Date().toISOString());
         
+        // Prevent multiple submissions
+        if (this.isSubmitting) {
+            console.log('⏳ Request already being submitted, skipping...');
+            return;
+        }
+        
+        this.isSubmitting = true;
+
         if (!this.emailjsInitialized) {
             showAlert('Email service not ready. Please try again.', 'error');
+            this.isSubmitting = false;
             return;
         }
 
@@ -350,6 +469,7 @@ export class RequestAccount {
 
         if (!isNameValid || !isEmailValid || !isPhoneValid || !isRoleValid || !isJustificationValid) {
             showAlert('Please fix all errors in the form', 'error');
+            this.isSubmitting = false;
             return;
         }
 
@@ -359,10 +479,14 @@ export class RequestAccount {
         try {
             setButtonLoading(requestButton, true, 'Submitting Request...');
 
+            // Debug: Log submission attempt
+            console.log('📧 Sending email via EmailJS...');
+
             // Send email via EmailJS
-            await this.sendAccountRequestEmail(formData);
+            const response = await this.sendAccountRequestEmail(formData);
             
-            console.log('Account request submitted successfully:', formData);
+            console.log('✅ Account request submitted successfully:', response);
+            console.log('📧 EmailJS response:', response);
             
             showAlert('Account request submitted successfully! An admin will contact you soon.', 'success', 8000);
             
@@ -373,14 +497,18 @@ export class RequestAccount {
             this.showConfirmationMessage(formData);
 
         } catch (error) {
-            console.error('Account request error:', error);
+            console.error('❌ Account request error:', error);
             this.handleAccountRequestError(error);
         } finally {
             setButtonLoading(requestButton, false);
+            // Reset after delay to prevent rapid re-submissions
+            setTimeout(() => {
+                this.isSubmitting = false;
+            }, 2000);
         }
     }
 
-    getFormData() {
+    async getFormData() {
         const phone = document.getElementById('phoneNumber').value.trim();
         
         return {
@@ -388,6 +516,7 @@ export class RequestAccount {
             email: document.getElementById('requestEmail').value.trim(),
             phoneNumber: phone,
             formattedPhone: this.formatPhoneForDisplay(phone),
+            company: document.getElementById('company')?.value.trim(),
             role: document.getElementById('role').value,
             roleDisplay: document.getElementById('role').options[document.getElementById('role').selectedIndex].text,
             justification: document.getElementById('justification').value.trim(),
@@ -400,7 +529,7 @@ export class RequestAccount {
                 hour: '2-digit',
                 minute: '2-digit'
             }),
-            ipAddress: 'Unknown' // You can get this from a service if needed
+            ipAddress: await this.getClientIP() || 'Not captured'
         };
     }
 
@@ -425,20 +554,37 @@ export class RequestAccount {
             requested_role: formData.roleDisplay,
             justification: formData.justification,
             timestamp: formData.timestamp,
-            subject: `New Account Request - ${formData.fullName}`,
-            user_agent: navigator.userAgent,
-            app_name: 'NetisTrackGh'
+            company_name: formData.company || 'Individual', // Add this field if available
+            user_agent: navigator.userAgent.substring(0, 100), // Truncate for email
+            app_name: 'NetisTrackGh Web Portal',
+            ip_address: await this.getClientIP() || 'Not captured'
         };
 
-        console.log('Sending email with params:', templateParams);
+        console.log('📤 Sending email with params:', templateParams);
 
-        // Send email using EmailJS
-        // REPLACE WITH YOUR ACTUAL SERVICE ID AND TEMPLATE ID
-        return await emailjs.send(
-            'NetisTrackGh',    // Your EmailJS service ID
-            'template_1o6p08r',   // Your EmailJS template ID
+        // Add timeout to prevent hanging requests
+        const emailPromise = emailjs.send(
+            'NetisTrackGh',
+            'template_1o6p08r',
             templateParams
         );
+
+        // Add timeout
+        const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => reject(new Error('Email sending timeout')), 10000);
+        });
+
+        return Promise.race([emailPromise, timeoutPromise]);
+    }
+
+    async getClientIP() {
+        try {
+            const response = await fetch('https://api.ipify.org?format=json');
+            const data = await response.json();
+            return data.ip;
+        } catch {
+            return 'Not captured';
+        }
     }
 
     showConfirmationMessage(formData) {
@@ -495,6 +641,7 @@ export class RequestAccount {
 
     destroy() {
         console.log('RequestAccount component destroyed');
-        // Clean up any event listeners or timeouts
+        this.detachEvents();
+        this.isSubmitting = false;
     }
 }

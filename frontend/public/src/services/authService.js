@@ -185,7 +185,7 @@ export const authService = {
         // Clear intervals
         this.stopAutoRefresh();
         this.stopSessionMonitor();
-        this.stopInactivityMonitor();
+        // this.stopInactivityMonitor();
     },
 
     // ============================

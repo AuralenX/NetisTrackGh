@@ -5,160 +5,92 @@ export class FuelGauge {
             : container;
         
         this.options = {
-            level: 0,
-            size: 200,
+            level: 50,
+            size: 120,
             showLabel: true,
-            showPercentage: true,
-            showWarning: true,
-            warningThreshold: 25,
-            criticalThreshold: 10,
+            showValue: true,
             animated: true,
             animationDuration: 1000,
+            theme: 'default',
             ...options
         };
 
         this.level = this.options.level;
-        this.canvas = null;
-        this.ctx = null;
-        this.animationId = null;
         this.currentLevel = 0;
-        this.init();
+        this.animationId = null;
+        this.element = null;
+        
+        if (this.container) {
+            this.init();
+        }
     }
 
     init() {
-        if (!this.container) {
-            console.error('❌ FuelGauge: Container not found');
-            return;
-        }
-
         this.createGauge();
         this.render();
     }
 
     createGauge() {
-        // Create canvas element
-        this.canvas = document.createElement('canvas');
-        this.canvas.width = this.options.size;
-        this.canvas.height = this.options.size;
-        this.canvas.className = 'fuel-gauge-canvas';
+        const gaugeId = `fuel-gauge-${Math.random().toString(36).substr(2, 9)}`;
         
-        // Create label container
-        const labelContainer = document.createElement('div');
-        labelContainer.className = 'fuel-gauge-label';
-        
-        // Create percentage display
-        const percentageDisplay = document.createElement('div');
-        percentageDisplay.className = 'fuel-gauge-percentage';
-        percentageDisplay.textContent = `${Math.round(this.level)}%`;
-        
-        // Create status text
-        const statusDisplay = document.createElement('div');
-        statusDisplay.className = 'fuel-gauge-status';
-        statusDisplay.textContent = this.getStatusText(this.level);
+        const gaugeHTML = `
+            <div class="fuel-gauge-component" id="${gaugeId}">
+                <div class="gauge-container">
+                    <div class="gauge-background"></div>
+                    <div class="gauge-fill" id="${gaugeId}-fill"></div>
+                    <div class="gauge-center">
+                        ${this.options.showValue ? `
+                        <div class="gauge-value" id="${gaugeId}-value">${this.level}%</div>
+                        ` : ''}
+                        ${this.options.showLabel ? `
+                        <div class="gauge-label" id="${gaugeId}-label">${this.getFuelStatus(this.level)}</div>
+                        ` : ''}
+                    </div>
+                </div>
+                ${this.options.showLabel ? `
+                <div class="gauge-legend">
+                    <div class="legend-item low">
+                        <span class="legend-color"></span>
+                        <span class="legend-text">Low</span>
+                    </div>
+                    <div class="legend-item medium">
+                        <span class="legend-color"></span>
+                        <span class="legend-text">Medium</span>
+                    </div>
+                    <div class="legend-item good">
+                        <span class="legend-color"></span>
+                        <span class="legend-text">Good</span>
+                    </div>
+                </div>
+                ` : ''}
+            </div>
+        `;
 
-        // Assemble the gauge
-        labelContainer.appendChild(percentageDisplay);
-        labelContainer.appendChild(statusDisplay);
-        
-        this.container.innerHTML = '';
-        this.container.appendChild(this.canvas);
-        this.container.appendChild(labelContainer);
-        
-        this.ctx = this.canvas.getContext('2d');
-        this.percentageDisplay = percentageDisplay;
-        this.statusDisplay = statusDisplay;
+        this.container.innerHTML = gaugeHTML;
+        this.element = document.getElementById(gaugeId);
+        this.fillElement = document.getElementById(`${gaugeId}-fill`);
+        this.valueElement = document.getElementById(`${gaugeId}-value`);
+        this.labelElement = document.getElementById(`${gaugeId}-label`);
     }
 
-    getStatusText(level) {
-        if (level <= this.options.criticalThreshold) {
-            return 'CRITICAL';
-        } else if (level <= this.options.warningThreshold) {
-            return 'LOW';
-        } else if (level <= 50) {
-            return 'MEDIUM';
-        } else {
-            return 'GOOD';
-        }
+    getFuelColor(level) {
+        if (level <= 10) return '#e53e3e';
+        if (level <= 25) return '#ed8936';
+        if (level <= 50) return '#ecc94b';
+        return '#38a169';
     }
 
-    getColor(level) {
-        if (level <= this.options.criticalThreshold) {
-            return '#e53e3e'; // Red
-        } else if (level <= this.options.warningThreshold) {
-            return '#ed8936'; // Orange
-        } else if (level <= 50) {
-            return '#ecc94b'; // Yellow
-        } else {
-            return '#38a169'; // Green
-        }
-    }
-
-    drawGauge(level) {
-        const ctx = this.ctx;
-        const size = this.options.size;
-        const center = size / 2;
-        const radius = size * 0.4;
-        const lineWidth = size * 0.1;
-        
-        // Clear canvas
-        ctx.clearRect(0, 0, size, size);
-        
-        // Draw background circle
-        ctx.beginPath();
-        ctx.arc(center, center, radius, 0, Math.PI * 2);
-        ctx.fillStyle = '#f7fafc';
-        ctx.fill();
-        ctx.lineWidth = lineWidth;
-        ctx.strokeStyle = '#e2e8f0';
-        ctx.stroke();
-        
-        // Draw gauge arc
-        const startAngle = Math.PI * 1.25; // Start at 225 degrees
-        const endAngle = startAngle + (Math.PI * 1.5 * (level / 100)); // 270 degrees total
-        
-        ctx.beginPath();
-        ctx.arc(center, center, radius, startAngle, endAngle);
-        ctx.lineWidth = lineWidth;
-        ctx.strokeStyle = this.getColor(level);
-        ctx.stroke();
-        
-        // Draw center circle
-        ctx.beginPath();
-        ctx.arc(center, center, radius * 0.3, 0, Math.PI * 2);
-        ctx.fillStyle = '#ffffff';
-        ctx.fill();
-        
-        // Draw inner border
-        ctx.beginPath();
-        ctx.arc(center, center, radius * 0.3, 0, Math.PI * 2);
-        ctx.lineWidth = 2;
-        ctx.strokeStyle = '#e2e8f0';
-        ctx.stroke();
-        
-        // Draw level indicator
-        const indicatorRadius = radius * 0.15;
-        const indicatorAngle = endAngle;
-        const indicatorX = center + (radius * 0.7) * Math.cos(indicatorAngle);
-        const indicatorY = center + (radius * 0.7) * Math.sin(indicatorAngle);
-        
-        ctx.beginPath();
-        ctx.arc(indicatorX, indicatorY, indicatorRadius, 0, Math.PI * 2);
-        ctx.fillStyle = this.getColor(level);
-        ctx.fill();
-        
-        // Draw indicator border
-        ctx.beginPath();
-        ctx.arc(indicatorX, indicatorY, indicatorRadius, 0, Math.PI * 2);
-        ctx.lineWidth = 2;
-        ctx.strokeStyle = '#ffffff';
-        ctx.stroke();
+    getFuelStatus(level) {
+        if (level <= 10) return 'Critical';
+        if (level <= 25) return 'Low';
+        if (level <= 50) return 'Medium';
+        return 'Good';
     }
 
     animateToLevel(targetLevel) {
         if (!this.options.animated) {
             this.currentLevel = targetLevel;
-            this.drawGauge(targetLevel);
-            this.updateLabels(targetLevel);
+            this.updateGauge();
             return;
         }
 
@@ -174,12 +106,10 @@ export class FuelGauge {
             const elapsed = currentTime - startTime;
             const progress = Math.min(elapsed / duration, 1);
             
-            // Easing function for smooth animation
-            const easeOutQuart = 1 - Math.pow(1 - progress, 4);
-            this.currentLevel = startLevel + (targetLevel - startLevel) * easeOutQuart;
+            const easeOutCubic = 1 - Math.pow(1 - progress, 3);
+            this.currentLevel = startLevel + (targetLevel - startLevel) * easeOutCubic;
             
-            this.drawGauge(this.currentLevel);
-            this.updateLabels(this.currentLevel);
+            this.updateGauge();
             
             if (progress < 1) {
                 this.animationId = requestAnimationFrame(animate);
@@ -191,21 +121,35 @@ export class FuelGauge {
         this.animationId = requestAnimationFrame(animate);
     }
 
-    updateLabels(level) {
-        if (this.percentageDisplay) {
-            this.percentageDisplay.textContent = `${Math.round(level)}%`;
-        }
+    updateGauge() {
+        if (!this.fillElement) return;
+
+        const level = Math.max(0, Math.min(100, this.currentLevel));
+        const rotation = (level / 100) * 180; // 0-180 degrees
         
-        if (this.statusDisplay) {
-            this.statusDisplay.textContent = this.getStatusText(level);
-            this.statusDisplay.style.color = this.getColor(level);
+        this.fillElement.style.transform = `rotate(${rotation}deg)`;
+        this.fillElement.style.backgroundColor = this.getFuelColor(level);
+
+        if (this.valueElement) {
+            this.valueElement.textContent = `${Math.round(level)}%`;
+        }
+
+        if (this.labelElement) {
+            this.labelElement.textContent = this.getFuelStatus(level);
+            this.labelElement.style.color = this.getFuelColor(level);
         }
     }
 
-    setLevel(level) {
+    setLevel(level, animate = true) {
         const newLevel = Math.max(0, Math.min(100, level));
         this.level = newLevel;
-        this.animateToLevel(newLevel);
+        
+        if (animate) {
+            this.animateToLevel(newLevel);
+        } else {
+            this.currentLevel = newLevel;
+            this.updateGauge();
+        }
     }
 
     getLevel() {
@@ -225,48 +169,117 @@ export class FuelGauge {
     destroy() {
         if (this.animationId) {
             cancelAnimationFrame(this.animationId);
-            this.animationId = null;
         }
         
         if (this.container) {
             this.container.innerHTML = '';
         }
+        
+        this.element = null;
+        this.fillElement = null;
+        this.valueElement = null;
+        this.labelElement = null;
     }
 }
 
 // CSS Styles for Fuel Gauge
 export const fuelGaugeStyles = `
-.fuel-gauge-container {
+.fuel-gauge-component {
     display: inline-block;
-    position: relative;
     text-align: center;
+    font-family: inherit;
 }
 
-.fuel-gauge-canvas {
-    display: block;
+.gauge-container {
+    position: relative;
+    width: var(--gauge-size, 120px);
+    height: calc(var(--gauge-size, 120px) / 2);
+    overflow: hidden;
     margin: 0 auto;
 }
 
-.fuel-gauge-label {
-    margin-top: 10px;
+.gauge-background {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: #e2e8f0;
+    border-radius: calc(var(--gauge-size, 120px) / 2) calc(var(--gauge-size, 120px) / 2) 0 0;
+    overflow: hidden;
 }
 
-.fuel-gauge-percentage {
+.gauge-fill {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: #38a169;
+    border-radius: calc(var(--gauge-size, 120px) / 2) calc(var(--gauge-size, 120px) / 2) 0 0;
+    transform-origin: center bottom;
+    transform: rotate(0deg);
+    transition: transform 0.5s ease, background-color 0.5s ease;
+}
+
+.gauge-center {
+    position: absolute;
+    bottom: 10%;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+    z-index: 2;
+}
+
+.gauge-value {
     font-size: 24px;
     font-weight: 700;
     color: #2d3748;
+    line-height: 1;
     margin-bottom: 4px;
 }
 
-.fuel-gauge-status {
+.gauge-label {
     font-size: 12px;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.05em;
+    color: #38a169;
 }
 
+.gauge-legend {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 16px;
+    font-size: 11px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: #718096;
+}
+
+.legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+    display: inline-block;
+}
+
+.legend-item.low .legend-color {
+    background: #e53e3e;
+}
+
+.legend-item.medium .legend-color {
+    background: #ecc94b;
+}
+
+.legend-item.good .legend-color {
+    background: #38a169;
+}
+
+/* Mini version for cards */
 .fuel-gauge-mini {
-    width: 60px;
+    width: 80px;
     height: 20px;
     background: #e2e8f0;
     border-radius: 10px;
@@ -274,14 +287,13 @@ export const fuelGaugeStyles = `
     position: relative;
 }
 
-.fuel-gauge-mini .fuel-bar {
+.fuel-gauge-mini .fuel-fill {
     height: 100%;
-    background: #38a169;
-    transition: width 0.3s ease;
     border-radius: 10px;
+    transition: width 0.3s ease;
 }
 
-.fuel-gauge-mini .fuel-text {
+.fuel-gauge-mini .fuel-percentage {
     position: absolute;
     top: 0;
     left: 0;

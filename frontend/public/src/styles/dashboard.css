@@ -250,7 +250,7 @@
     border: 1px solid #e2e8f0;
     display: none;
     animation: dropdownSlide 0.3s ease;
-    z-index: 1005;
+    z-index: 1000;
 }
 
 @keyframes dropdownSlide {
@@ -267,6 +267,8 @@
 
 .settings-dropdown.show {
     display: block;
+    opacity: 1;
+    /* transform: translateY(0); */
 }
 
 .dropdown-header {

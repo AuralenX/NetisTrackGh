@@ -1,39 +1,76 @@
 import { showAlert, formatDate, setButtonLoading } from '../utils/helpers.js';
 import { authService } from '../services/authService.js';
+import { siteService } from '../services/siteService.js';
 import { SiteCard } from '../../components/site-card.js';
 import { MaintenanceAlert } from '../../components/maintenance-alert.js';
-import { Modal } from '../../components/modal.js';
+import { 
+    AddSiteModal, 
+    FuelSiteSelectorModal,
+    FuelLogModal,
+    MaintenanceSiteSelectorModal,
+    MaintenanceLogModal,
+    MaintenanceSchedulerModal
+} from '../modals/index.js';
 
 export class TechnicianDashboard {
     constructor() {
         this.userProfile = null;
         this.sites = [];
-        this.siteComponents = []; // Store site card components
+        this.siteComponents = [];
         this.activities = [];
-        this.alertComponents = []; // Store alert components
+        this.alertComponents = [];
         this.alerts = [];
         this.isInitialized = false;
         this.isSidebarOpen = false;
         this.isSettingsOpen = false;
         this.eventHandlers = {};
-        this.quickActionHandlers = {};
+        this.eventsAttached = false;
+        
+        // Initialize services
+        this.initServices();
+        
+        // Bind methods
+        this.showAddSiteForm = this.showAddSiteForm.bind(this);
+        this.showFuelLogForm = this.showFuelLogForm.bind(this);
+        this.showMaintenanceForm = this.showMaintenanceForm.bind(this);
+        this.syncOfflineData = this.syncOfflineData.bind(this);
+        
         this.init();
+    }
+
+    initServices() {
+        // Initialize authService if not already initialized
+        if (authService && !authService.config) {
+            authService.init();
+        }
+        
+        // Initialize siteService if not already initialized
+        if (siteService && !siteService.config) {
+            siteService.init();
+        }
     }
 
     async init() {
         console.log('🏗️ Technician Dashboard initializing...');
         
         try {
-            // Check authentication
-            const isAuthenticated = await authService.isAuthenticated();
+            // Check authentication using authService
+            const isAuthenticated = authService.isAuthenticated();
+            
             if (!isAuthenticated) {
                 showAlert('Please login to access dashboard', 'error');
                 window.location.hash = 'login';
                 return;
             }
 
-            // Load user profile
+            // Load user profile using authService
             this.userProfile = authService.getUserProfile();
+            
+            if (!this.userProfile) {
+                showAlert('Failed to load user profile', 'error');
+                await authService.logout();
+                return;
+            }
             
             // Load dashboard data
             await this.loadDashboardData();
@@ -51,7 +88,7 @@ export class TechnicianDashboard {
         console.log('📊 Loading dashboard data...');
         
         try {
-            // Load assigned sites
+            // Load assigned sites using siteService
             this.sites = await this.loadAssignedSites();
             
             // Load recent activities
@@ -60,7 +97,7 @@ export class TechnicianDashboard {
             // Load alerts
             this.alerts = await this.loadAlerts();
             
-            console.log('✅ Dashboard data loaded successfully');
+            console.log(`✅ Dashboard data loaded: ${this.sites.length} sites, ${this.activities.length} activities, ${this.alerts.length} alerts`);
             
         } catch (error) {
             console.error('❌ Failed to load dashboard data:', error);
@@ -69,10 +106,51 @@ export class TechnicianDashboard {
     }
 
     async loadAssignedSites() {
-        // Mock data - replace with actual API call
+        try {
+            console.log('📡 Loading assigned sites...');
+            
+            // Try to get sites from service
+            let sites = [];
+            
+            if (siteService && typeof siteService.getSites === 'function') {
+                const result = await siteService.getSites();
+                console.log('📡 Site service result:', result);
+                
+                // Handle different response formats
+                if (Array.isArray(result)) {
+                    sites = result;
+                } else if (result && result.data && Array.isArray(result.data)) {
+                    sites = result.data;
+                } else if (result && result.sites && Array.isArray(result.sites)) {
+                    sites = result.sites;
+                } else if (result && typeof result === 'object') {
+                    // Convert object to array
+                    sites = Object.values(result);
+                }
+            }
+            
+            // If we got no sites, use mock data
+            if (!sites || sites.length === 0) {
+                console.log('📡 No sites from service, using mock data');
+                sites = this.getMockSites();
+            }
+            
+            console.log(`✅ Loaded ${sites.length} sites`);
+            return sites;
+            
+        } catch (error) {
+            console.error('❌ Failed to load assigned sites:', error);
+            
+            // Always return an array
+            return this.getMockSites();
+        }
+    }
+
+    getMockSites() {
         return [
             {
                 id: '600545',
+                siteId: '600545',
                 name: 'Accra Central Tower',
                 location: 'Ring Road Central, Accra',
                 fuelLevel: 75,
@@ -85,6 +163,7 @@ export class TechnicianDashboard {
             },
             {
                 id: '600546',
+                siteId: '600546',
                 name: 'Kumasi North Site',
                 location: 'Adum, Kumasi',
                 fuelLevel: 45,
@@ -97,6 +176,7 @@ export class TechnicianDashboard {
             },
             {
                 id: '600547',
+                siteId: '600547',
                 name: 'Tamale Telecom Hub',
                 location: 'Tamale Central',
                 fuelLevel: 90,
@@ -144,7 +224,17 @@ export class TechnicianDashboard {
     }
 
     async loadAlerts() {
-        // Mock data - replace with actual API call
+        try {
+            // Try to load alerts from siteService or API
+            // For now, return mock data
+            return this.getMockAlerts();
+        } catch (error) {
+            console.error('❌ Failed to load alerts:', error);
+            return this.getMockAlerts();
+        }
+    }
+
+    getMockAlerts() {
         return [
             {
                 id: '1',
@@ -192,6 +282,8 @@ export class TechnicianDashboard {
         const userName = this.userProfile?.firstName || 'Technician';
         const userRole = this.userProfile?.role || 'technician';
         const userInitial = userName.charAt(0).toUpperCase();
+        
+        // Calculate unread alerts
         const unreadAlertsCount = this.alerts.filter(a => !a.acknowledged).length;
         const urgentAlertsCount = this.alerts.filter(a => a.severity === 'high' && !a.acknowledged).length;
         
@@ -208,13 +300,13 @@ export class TechnicianDashboard {
 
                         <!-- User Section -->
                         <div class="user-section">
-                            <button class="action-btn notification-btn" id="notificationBtn" title="Notifications">
+                            <button class="notification-btn" id="notificationBtn">
                                 <i class="fas fa-bell"></i>
                                 ${unreadAlertsCount > 0 ? 
                                     `<span class="notification-badge">${unreadAlertsCount}</span>` : ''}
                             </button>
 
-                            <button class="action-btn menu-btn" id="menuBtn" title="Menu">
+                            <button class="menu-btn" id="menuBtn" title="Menu">
                                 <i class="fas fa-bars"></i>
                             </button>
                             
@@ -226,9 +318,9 @@ export class TechnicianDashboard {
                                     <div class="user-name">${userName}</div>
                                     <div class="user-role">${userRole}</div>
                                 </div>
-                                <button class="settings-toggle" id="settingsToggle">
+                                <div class="settings-chevron">
                                     <i class="fas fa-chevron-down"></i>
-                                </button>
+                                </div>
                             </div>
                             
                             <!-- Settings Dropdown -->
@@ -282,7 +374,7 @@ export class TechnicianDashboard {
                     <aside class="dashboard-sidebar" id="dashboardSidebar">
                         <div class="sidebar-header">
                             <h3 class="sidebar-title">Navigation</h3>
-                            <button class="close-sidebar-btn" id="closeSidebarBtn" title="Close Menu">
+                            <button class="close-sidebar-btn" id="closeSidebarBtn">
                                 <i class="fas fa-xmark"></i>
                             </button>
                         </div>
@@ -508,14 +600,22 @@ export class TechnicianDashboard {
                         You haven't been assigned to any sites yet. 
                         Contact your supervisor for site assignments.
                     </p>
-                    <button class="add-site-btn" id="emptyStateAddSiteBtn">
+                    <button class="add-site-btn" id="emptyStateAddSiteBtn" style="
+                        margin-top: 16px;
+                        padding: 10px 20px;
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        color: white;
+                        border: none;
+                        border-radius: 8px;
+                        cursor: pointer;
+                        font-weight: 500;
+                    ">
                         <i class="fas fa-plus-circle"></i> Add Your First Site
                     </button>
                 </div>
             `;
         }
 
-        // Return container HTML - SiteCard components will render after DOM is ready
         return this.sites.map(site => 
             `<div id="site-card-${site.id}" class="site-card-container"></div>`
         ).join('');
@@ -551,33 +651,41 @@ export class TechnicianDashboard {
     }
 
     renderAlerts() {
-        if (this.alerts.length === 0) {
+        // Filter to only show unacknowledged alerts or all alerts
+        const displayAlerts = this.alerts.filter(alert => !alert.acknowledged);
+        
+        if (displayAlerts.length === 0) {
             return `
                 <div class="empty-state">
                     <div class="empty-icon"><i class="fas fa-bell"></i></div>
-                    <h3 class="empty-title">No Alerts</h3>
+                    <h3 class="empty-title">No Unread Alerts</h3>
                     <p class="empty-description">
-                        Great! No alerts at the moment.
+                        Great! No unread alerts at the moment.
                     </p>
                 </div>
             `;
         }
 
-        // Return container HTML - MaintenanceAlert components will render after DOM is ready
-        return this.alerts.map(alert => 
+        return displayAlerts.map(alert => 
             `<div id="alert-${alert.id}" class="alert-container"></div>`
         ).join('');
     }
 
-    // ===== COMPONENT MANAGEMENT =====
-    
     renderComponents() {
-        console.log('🎨 Rendering components...');
-        
-        // Clear previous components
-        this.cleanupComponents();
-        
-        // Render Site Cards
+    console.log('🎨 Rendering components...');
+    
+    // Ensure sites is an array
+    if (!Array.isArray(this.sites)) {
+        console.error('❌ this.sites is not an array:', this.sites);
+        this.sites = this.sites ? [this.sites] : [];
+    }
+    
+    // Clear previous components
+    this.siteComponents = [];
+    this.alertComponents = [];
+    
+    // Render Site Cards only if we have sites
+    if (this.sites.length > 0) {
         this.sites.forEach(site => {
             const container = document.getElementById(`site-card-${site.id}`);
             if (container) {
@@ -585,22 +693,30 @@ export class TechnicianDashboard {
                 container.innerHTML = siteCard.render();
                 siteCard.attachEvents();
                 this.siteComponents.push(siteCard);
+                
+                // Setup event listeners for site card actions
                 this.setupSiteCardEvents(siteCard, site.id);
             }
         });
-        
-        // Render Maintenance Alerts
-        this.alerts.forEach(alert => {
-            const container = document.getElementById(`alert-${alert.id}`);
-            if (container) {
-                const maintenanceAlert = new MaintenanceAlert(alert);
-                container.innerHTML = maintenanceAlert.render();
-                maintenanceAlert.attachEvents();
-                this.alertComponents.push(maintenanceAlert);
-                this.setupAlertEvents(maintenanceAlert, alert.id);
-            }
-        });
     }
+    
+    // Render Maintenance Alerts
+    const displayAlerts = Array.isArray(this.alerts) ? 
+        this.alerts.filter(alert => !alert.acknowledged) : [];
+    
+    displayAlerts.forEach(alert => {
+        const container = document.getElementById(`alert-${alert.id}`);
+        if (container) {
+            const maintenanceAlert = new MaintenanceAlert(alert);
+            container.innerHTML = maintenanceAlert.render();
+            maintenanceAlert.attachEvents();
+            this.alertComponents.push(maintenanceAlert);
+            
+            // Setup event listeners for alert actions
+            this.setupAlertEvents(maintenanceAlert, alert.id);
+        }
+    });
+}
 
     setupSiteCardEvents(siteCard, siteId) {
         // Listen for custom events from site card
@@ -659,91 +775,151 @@ export class TechnicianDashboard {
         return icons[type] || 'fa-clipboard-list';
     }
 
-    // ===== EVENT HANDLING =====
-    
     attachEvents() {
-    console.log('🔗 Attaching dashboard events...');
-    
-    // Remove any existing event listeners
-    this.removeEventListeners();
-    
-    // Mobile sidebar controls
-    this.attachEvent('menuBtn', () => this.toggleSidebar());
-    this.attachEvent('closeSidebarBtn', () => this.closeSidebar());
-    this.attachEvent('sidebarOverlay', () => this.closeSidebar());
-    
-    // Settings dropdown
-    this.attachEvent('userInfo', (e) => this.toggleSettingsDropdown(e));
-    this.attachEvent('settingsToggle', (e) => {
-        e.stopPropagation();
-        this.toggleSettingsDropdown();
-    });
-    this.attachEvent('settingsOverlay', () => this.closeSettingsDropdown());
-    
-    // Logout handlers
-    this.attachEvent('dropdownLogoutBtn', async (e) => {
-        e.stopPropagation();
-        this.closeSettingsDropdown();
-        await this.handleLogout();
-    });
-    this.attachEvent('sidebarLogoutBtn', async (e) => {
-        e.stopPropagation();
-        this.closeSidebar();
-        await this.handleLogout();
-    });
-    
-    // Notification and navigation
-    this.attachEvent('notificationBtn', () => this.showNotifications());
-    this.attachEvent('viewAllSitesBtn', () => this.showAllSites());
-    this.attachEvent('viewAllActivitiesBtn', () => this.showAllActivities());
-    this.attachEvent('markAllReadBtn', () => this.markAllAlertsRead());
-    this.attachEvent('emptyStateAddSiteBtn', () => this.showAddSiteForm());
-    
-    // Close settings dropdown when clicking outside
-    this.eventHandlers.closeSettingsOnClickOutside = (e) => this.handleClickOutsideSettings(e);
-    document.addEventListener('click', this.eventHandlers.closeSettingsOnClickOutside);
-    
-    // Quick action buttons - USE ARROW FUNCTIONS HERE
-    this.attachQuickActions();
-    
-    // Render components after DOM is ready
-    setTimeout(() => this.renderComponents(), 100);
-
-    console.log('✅ Dashboard events attached successfully');
-}
-
-attachQuickActions() {
-    const quickActions = {
-        'logFuelBtn': () => this.showFuelLogForm(),
-        'logMaintenanceBtn': () => this.showMaintenanceForm(),
-        'addSiteBtn': () => this.showAddSiteForm(),
-        'syncDataBtn': () => this.syncOfflineData()
-    };
-
-    Object.entries(quickActions).forEach(([btnId, handler]) => {
-        const button = document.getElementById(btnId);
-        if (button) {
-            this.quickActionHandlers[btnId] = handler;
-            button.addEventListener('click', handler);
+       console.log('🔗 Attaching dashboard events...');
+        
+        // DEBUG: Check if events are already attached
+        if (this.eventsAttached) {
+            console.warn('⚠️ Events already attached, skipping...');
+            return;
         }
-    });
-}
+        
+        // First, remove any existing event listeners
+        this.removeEventListeners();
+    
+        // Menu button (mobile)
+        const menuBtn = document.getElementById('menuBtn');
+        if (menuBtn) {
+            this.eventHandlers.menuBtn = () => this.toggleSidebar();
+            menuBtn.addEventListener('click', this.eventHandlers.menuBtn);
+        }
+        
+        // Close sidebar button
+        const closeSidebarBtn = document.getElementById('closeSidebarBtn');
+        if (closeSidebarBtn) {
+            this.eventHandlers.closeSidebarBtn = () => this.closeSidebar();
+            closeSidebarBtn.addEventListener('click', this.eventHandlers.closeSidebarBtn);
+        }
+        
+        // Sidebar overlay
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+        if (sidebarOverlay) {
+            this.eventHandlers.sidebarOverlay = () => this.closeSidebar();
+            sidebarOverlay.addEventListener('click', this.eventHandlers.sidebarOverlay);
+        }
+        
+        // Settings dropdown - FIXED: Only attach to userInfo
+        const userInfo = document.getElementById('userInfo');
+        
+        if (userInfo) {
+            this.eventHandlers.userInfo = (e) => {
+                console.log('👤 User info clicked, :');
+                e.stopPropagation();
+                this.toggleSettingsDropdown(e);
+            };
+            userInfo.addEventListener('click', this.eventHandlers.userInfo);
+        }
+        
+        // Close dropdown when clicking outside
+        this.eventHandlers.closeDropdownOnClick = (e) => {
+            const userInfo = document.getElementById('userInfo');
+            const dropdown = document.getElementById('settingsDropdown');
+            
+            if (dropdown.classList.contains('show')) {
+                if (!userInfo?.contains(e.target)) {
+                    console.log('👆 Clicked outside, closing dropdown');
+                    this.closeSettingsDropdown();
+                }
+            }
+        };
+        document.addEventListener('click', this.eventHandlers.closeDropdownOnClick);
+        
+        // Close on escape key
+        this.eventHandlers.closeOnEscape = (e) => {
+            if (e.key === 'Escape') {
+                this.closeSettingsDropdown();
+            }
+        };
+        document.addEventListener('keydown', this.eventHandlers.closeOnEscape);
+        
+        // Logout buttons
+        const dropdownLogoutBtn = document.getElementById('dropdownLogoutBtn');
+        const sidebarLogoutBtn = document.getElementById('sidebarLogoutBtn');
+        
+        if (dropdownLogoutBtn) {
+            this.eventHandlers.dropdownLogoutBtn = async (e) => {
+                e.stopPropagation();
+                this.closeSettingsDropdown();
+                await this.handleLogout();
+            };
+            dropdownLogoutBtn.addEventListener('click', this.eventHandlers.dropdownLogoutBtn);
+        }
+        
+        if (sidebarLogoutBtn) {
+            this.eventHandlers.sidebarLogoutBtn = async (e) => {
+                e.stopPropagation();
+                this.closeSidebar();
+                await this.handleLogout();
+            };
+            sidebarLogoutBtn.addEventListener('click', this.eventHandlers.sidebarLogoutBtn);
+        }
 
-    attachEvent(elementId, handler) {
-    const element = document.getElementById(elementId);
-    if (element) {
-        // Ensure handler is properly bound
-        const boundHandler = handler.bind ? handler : handler; // handler should already be an arrow function
-        this.eventHandlers[elementId] = boundHandler;
-        element.addEventListener('click', boundHandler);
+        // Notification button
+        const notificationBtn = document.getElementById('notificationBtn');
+        if (notificationBtn) {
+            this.eventHandlers.notificationBtn = () => this.showNotifications();
+            notificationBtn.addEventListener('click', this.eventHandlers.notificationBtn);
+        }
+
+        // View all buttons
+        const viewAllSitesBtn = document.getElementById('viewAllSitesBtn');
+        if (viewAllSitesBtn) {
+            this.eventHandlers.viewAllSitesBtn = () => this.showAllSites();
+            viewAllSitesBtn.addEventListener('click', this.eventHandlers.viewAllSitesBtn);
+        }
+        
+        const viewAllActivitiesBtn = document.getElementById('viewAllActivitiesBtn');
+        if (viewAllActivitiesBtn) {
+            this.eventHandlers.viewAllActivitiesBtn = () => this.showAllActivities();
+            viewAllActivitiesBtn.addEventListener('click', this.eventHandlers.viewAllActivitiesBtn);
+        }
+        
+        const markAllReadBtn = document.getElementById('markAllReadBtn');
+        if (markAllReadBtn) {
+            this.eventHandlers.markAllReadBtn = () => this.markAllAlertsRead();
+            markAllReadBtn.addEventListener('click', this.eventHandlers.markAllReadBtn);
+        }
+
+        // Empty state add site button
+        const emptyStateAddSiteBtn = document.getElementById('emptyStateAddSiteBtn');
+        if (emptyStateAddSiteBtn) {
+            this.eventHandlers.emptyStateAddSiteBtn = () => this.showAddSiteForm();
+            emptyStateAddSiteBtn.addEventListener('click', this.eventHandlers.emptyStateAddSiteBtn);
+        }
+
+        // Quick action buttons
+        this.attachQuickActions();
+        
+        // Render components after DOM is ready
+        setTimeout(() => {
+            this.renderComponents();
+        }, 100);
+
+        // Mark as attached
+        this.eventsAttached = true;
+        console.log('✅ Dashboard events attached successfully');
     }
-}
 
     toggleSettingsDropdown(e) {
-        if (e) e.stopPropagation();
+        console.log('🔄 Toggling settings dropdown');
+        
+        // if (e) {
+        //     e.stopPropagation();
+        // }
         
         const settingsDropdown = document.getElementById('settingsDropdown');
-        if (settingsDropdown?.classList.contains('show')) {
+        
+        if (settingsDropdown && settingsDropdown.classList.contains('show')) {
             this.closeSettingsDropdown();
         } else {
             this.openSettingsDropdown();
@@ -751,37 +927,44 @@ attachQuickActions() {
     }
 
     openSettingsDropdown() {
+        console.log('📖 Opening settings dropdown');
+        
         const settingsDropdown = document.getElementById('settingsDropdown');
         const settingsOverlay = document.getElementById('settingsOverlay');
         
-        if (settingsDropdown) settingsDropdown.classList.add('show');
-        if (settingsOverlay) settingsOverlay.classList.add('active');
+        if (settingsDropdown) {
+            settingsDropdown.classList.add('show');
+            settingsDropdown.style.display = 'block';
+            settingsDropdown.style.opacity = '1';
+            settingsDropdown.style.visibility = 'visible';
+            settingsDropdown.style.zIndex = '1000';
+        }
+        
+        if (settingsOverlay) {
+            settingsOverlay.classList.add('active');
+            settingsOverlay.style.display = 'block';
+        }
         
         this.isSettingsOpen = true;
     }
 
     closeSettingsDropdown() {
+        console.log('📕 Closing settings dropdown');
+        
         const settingsDropdown = document.getElementById('settingsDropdown');
         const settingsOverlay = document.getElementById('settingsOverlay');
         
-        if (settingsDropdown) settingsDropdown.classList.remove('show');
-        if (settingsOverlay) settingsOverlay.classList.remove('active');
+        if (settingsDropdown) {
+            settingsDropdown.classList.remove('show');
+            settingsDropdown.style.display = 'none';
+        }
+        
+        if (settingsOverlay) {
+            settingsOverlay.classList.remove('active');
+            settingsOverlay.style.display = 'none';
+        }
         
         this.isSettingsOpen = false;
-    }
-
-    handleClickOutsideSettings(e) {
-        const settingsDropdown = document.getElementById('settingsDropdown');
-        const userInfo = document.getElementById('userInfo');
-        const settingsToggle = document.getElementById('settingsToggle');
-        
-        if (settingsDropdown?.classList.contains('show')) {
-            if (!settingsDropdown.contains(e.target) && 
-                !userInfo?.contains(e.target) && 
-                !settingsToggle?.contains(e.target)) {
-                this.closeSettingsDropdown();
-            }
-        }
     }
 
     async handleLogout() {
@@ -796,72 +979,99 @@ attachQuickActions() {
     }
 
     removeEventListeners() {
-        // Remove all event listeners
-        Object.entries(this.eventHandlers).forEach(([key, handler]) => {
-            if (key === 'closeSettingsOnClickOutside') {
-                document.removeEventListener('click', handler);
-            } else {
-                const element = document.getElementById(key);
-                if (element && handler) {
-                    element.removeEventListener('click', handler);
-                }
+    console.log('🧹 Removing event listeners...');
+    
+    // Remove all event listeners
+    Object.entries(this.eventHandlers).forEach(([key, handler]) => {
+        if (key === 'closeDropdownOnClick' || key === 'closeOnEscape') {
+            document.removeEventListener(key === 'closeDropdownOnClick' ? 'click' : 'keydown', handler);
+        } else {
+            const element = document.getElementById(key);
+            if (element && handler) {
+                element.removeEventListener('click', handler);
             }
-        });
-        
-        // Clear quick action handlers
-        this.removeQuickActionListeners();
-        
-        // Clear component listeners
-        this.cleanupComponents();
-        
-        this.eventHandlers = {};
-    }
+        }
+    });
+    
+    // Clear quick action handlers
+    this.removeQuickActionListeners();
+    
+    // Clear component listeners
+    this.cleanupComponents();
+    
+    // Reset handlers
+    this.eventHandlers = {};
+    this.eventsAttached = false;
+    
+    console.log('✅ Event listeners removed');
+}
 
     cleanupComponents() {
         // Clean up site card components
         this.siteComponents.forEach(siteCard => {
-            if (siteCard?.destroy) siteCard.destroy();
+            if (siteCard && typeof siteCard.destroy === 'function') {
+                siteCard.destroy();
+            }
         });
         this.siteComponents = [];
         
         // Clean up alert components
         this.alertComponents.forEach(alert => {
-            if (alert?.destroy) alert.destroy();
+            if (alert && typeof alert.destroy === 'function') {
+                alert.destroy();
+            }
         });
         this.alertComponents = [];
     }
 
-    // attachQuickActions() {
-    //     const quickActions = {
-    //         'logFuelBtn': () => this.showFuelLogForm(),
-    //         'logMaintenanceBtn': () => this.showMaintenanceForm(),
-    //         'addSiteBtn': () => this.showAddSiteForm(),
-    //         'syncDataBtn': () => this.syncOfflineData()
-    //     };
+    attachQuickActions() {
+        // Create debounced versions of handlers
+        const debouncedShowAddSite = this.debounce(() => this.showAddSiteForm(), 300);
+        const debouncedShowFuelLog = this.debounce(() => this.showFuelLogForm(), 300);
+        const debouncedShowMaintenance = this.debounce(() => this.showMaintenanceForm(), 300);
+        const debouncedSyncData = this.debounce(() => this.syncOfflineData(), 300);
+        
+        const quickActions = {
+            'logFuelBtn': debouncedShowFuelLog,
+            'logMaintenanceBtn': debouncedShowMaintenance,
+            'addSiteBtn': debouncedShowAddSite,
+            'syncDataBtn': debouncedSyncData
+        };
 
-    //     Object.entries(quickActions).forEach(([btnId, handler]) => {
-    //         const button = document.getElementById(btnId);
-    //         if (button) {
-    //             this.quickActionHandlers[btnId] = handler;
-    //             button.addEventListener('click', handler);
-    //         }
-    //     });
-    // }
-
-    removeQuickActionListeners() {
-        Object.entries(this.quickActionHandlers).forEach(([btnId, handler]) => {
+        Object.entries(quickActions).forEach(([btnId, handler]) => {
             const button = document.getElementById(btnId);
-            if (button && handler) {
+            if (button) {
+                // Remove existing listener first
                 button.removeEventListener('click', handler);
+                
+                // Add new listener
+                this.eventHandlers[btnId] = handler;
+                button.addEventListener('click', handler);
+                
+                console.log(`✅ Attached debounced handler to ${btnId}`);
             }
         });
-        this.quickActionHandlers = {};
     }
 
-    // ===== SIDEBAR METHODS =====
-    
+    removeQuickActionListeners() {
+        Object.keys(this.eventHandlers).forEach(key => {
+            if (['logFuelBtn', 'logMaintenanceBtn', 'addSiteBtn', 'syncDataBtn'].includes(key)) {
+                const button = document.getElementById(key);
+                const handler = this.eventHandlers[key];
+                if (button && handler) {
+                    button.removeEventListener('click', handler);
+                }
+            }
+        });
+    }
+
+    // Sidebar Methods
     toggleSidebar() {
-        this.isSidebarOpen ? this.closeSidebar() : this.openSidebar();
+        if (this.isSidebarOpen) {
+            this.closeSidebar();
+        } else {
+            this.openSidebar();
+        }
     }
 
     openSidebar() {
@@ -898,8 +1108,7 @@ attachQuickActions() {
         this.isSidebarOpen = false;
     }
 
-    // ===== NAVIGATION METHODS =====
-    
+    // Navigation Methods
     showAllSites() {
         showAlert('Showing all sites...', 'info');
         console.log('📋 Showing all sites');
@@ -911,267 +1120,185 @@ attachQuickActions() {
     }
 
     markAllAlertsRead() {
-        this.alerts.forEach(alert => alert.acknowledged = true);
-        
-        this.alertComponents.forEach(alertComponent => {
-            if (alertComponent.updateData) {
-                alertComponent.updateData({ acknowledged: true });
-            }
+        // Mark all alerts as read
+        this.alerts.forEach(alert => {
+            alert.acknowledged = true;
         });
+        
+        // Update alert components
+        this.alertComponents.forEach(alertComponent => {
+            alertComponent.updateData({ acknowledged: true });
+        });
+        
+        // Update UI
+        this.updateAlertsDisplay();
         
         showAlert('All alerts marked as read', 'success');
         console.log('✅ Marking all alerts as read');
     }
 
-    // ===== MODAL METHODS =====
-    
-    showFuelLogFormForSite(siteId, siteName) {
-        console.log(`⛽ Logging fuel for site: ${siteId} - ${siteName}`);
-        this.showFuelLogModal(siteId, siteName);
-    }
-
-    showMaintenanceFormForSite(siteId, siteName) {
-        console.log(`🔧 Logging maintenance for site: ${siteId} - ${siteName}`);
-        this.showMaintenanceModal(siteId, siteName);
-    }
-
-    viewSiteDetails(siteId) {
-        console.log(`🔍 Viewing details for site: ${siteId}`);
-        showAlert(`Site ${siteId} details will be shown in the next phase`, 'info');
-    }
-
-    // Alert Actions
-    acknowledgeAlert(alertId) {
-        console.log(`✅ Acknowledging alert: ${alertId}`);
+    showAddSiteForm() {
+        console.log('➕ Add Site clicked:', {
+            userProfile: this.userProfile,
+            timestamp: new Date().toISOString(),
+            stack: new Error().stack // This will show where the call came from
+        });
         
-        const alertIndex = this.alerts.findIndex(a => a.id === alertId);
-        if (alertIndex !== -1) {
-            this.alerts[alertIndex].acknowledged = true;
-            
-            const alertComponent = this.alertComponents.find(ac => ac.alertData.id === alertId);
-            if (alertComponent?.updateData) {
-                alertComponent.updateData({ acknowledged: true });
-            }
-            
-            showAlert('Alert acknowledged successfully', 'success');
-        }
-    }
-
-    scheduleMaintenance(siteId, siteName) {
-        console.log(`📅 Scheduling maintenance for site: ${siteId} - ${siteName}`);
-        this.showMaintenanceSchedulerModal(siteId, siteName);
-    }
-
-    showFuelLogModal(siteId = null, siteName = '') {
-        if (!siteId) {
-            this.showFuelLogForm();
+        const isAuthenticated = authService.isAuthenticated();
+        
+        if (!isAuthenticated || !this.userProfile) {
+            showAlert('Please login to add sites', 'error');
+            console.log('User not authenticated, redirecting to login...');
+            window.location.hash = 'login';
             return;
         }
-
-        const modal = this.createFuelLogModal(siteId, siteName);
+        
+        // Prevent multiple modals
+        if (this.addSiteModalOpen) {
+            console.log('⚠️ Add site modal already open');
+            return;
+        }
+        
+        this.addSiteModalOpen = true;
+        
+        const modal = new AddSiteModal(this.userProfile, async (formData) => {
+            await this.handleAddSiteSubmit(formData);
+            this.addSiteModalOpen = false;
+        });
+        
         modal.open();
     }
-
-    createFuelLogModal(siteId, siteName) {
-        return new Modal({
-            id: 'fuelLogModal',
-            title: `<i class="fas fa-gas-pump"></i> Log Fuel Refill`,
-            content: this.getFuelLogFormHTML(siteId, siteName),
-            size: 'md',
-            confirmText: 'Log Fuel',
-            cancelText: 'Cancel',
-            confirmButtonClass: 'btn-primary',
-            onConfirm: () => this.submitFuelLog(modal, siteId)
-        });
+    
+    async handleAddSiteSubmit(formData) {
+        try {
+            const createdSite = await siteService.createSite(formData);
+            
+            showAlert('✅ Site registered successfully!', 'success');
+            
+            // Update dashboard
+            this.sites.unshift(createdSite);
+            this.updateSitesDisplay();
+            
+            // Add activity
+            this.addActivity('site', formData.siteId, 'New site registered');
+            
+            this.updateActivitiesList();
+            
+        } catch (error) {
+            console.error('Add site error:', error);
+            throw error;
+        }
     }
-
-    getFuelLogFormHTML(siteId, siteName) {
-        const currentDateTime = new Date().toISOString().slice(0, 16);
-        
-        return `
-            <form id="fuelLogForm" data-site-id="${siteId}">
-                <div class="modal-form-group">
-                    <div class="modal-form-row">
-                        <div class="site-info">
-                            <div class="modal-form-label">Site</div>
-                            <div class="site-display">
-                                <strong>${siteName}</strong> (ID: ${siteId})
-                            </div>
-                        </div>
-                        <div>
-                            <label class="modal-form-label" for="fuelDate">
-                                <i class="far fa-calendar"></i> Date & Time
-                            </label>
-                            <input type="datetime-local" 
-                                   id="fuelDate" 
-                                   class="modal-form-input"
-                                   value="${currentDateTime}"
-                                   required>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="modal-form-group">
-                    <label class="modal-form-label" for="fuelAmount">
-                        <i class="fas fa-oil-can"></i> Fuel Amount (Liters)
-                    </label>
-                    <input type="number" 
-                           id="fuelAmount" 
-                           class="modal-form-input" 
-                           min="1" 
-                           max="10000" 
-                           step="0.1"
-                           placeholder="Enter amount in liters"
-                           required>
-                    <div class="modal-form-helper">
-                        Typical diesel generator consumption: 3-5 L/hour
-                    </div>
-                </div>
-
-                <div class="modal-form-group">
-                    <label class="modal-form-label" for="fuelType">
-                        <i class="fas fa-gas-pump"></i> Fuel Type
-                    </label>
-                    <select id="fuelType" class="modal-form-select" required>
-                        <option value="">Select fuel type</option>
-                        <option value="diesel" selected>Diesel</option>
-                        <option value="petrol">Petrol/Gasoline</option>
-                        <option value="hybrid">Hybrid (Solar + Generator)</option>
-                    </select>
-                </div>
-
-                <div class="modal-form-group">
-                    <label class="modal-form-label" for="fuelSupplier">
-                        <i class="fas fa-truck"></i> Fuel Supplier
-                    </label>
-                    <input type="text" 
-                           id="fuelSupplier" 
-                           class="modal-form-input" 
-                           placeholder="Enter supplier name">
-                </div>
-
-                <div class="modal-form-group">
-                    <label class="modal-form-label" for="meterReading">
-                        <i class="fas fa-tachometer-alt"></i> Generator Meter Reading (Hours)
-                    </label>
-                    <input type="number" 
-                           id="meterReading" 
-                           class="modal-form-input" 
-                           min="0"
-                           step="0.1"
-                           placeholder="Current generator hours">
-                </div>
-
-                <div class="modal-form-group">
-                    <label class="modal-form-label" for="cost">
-                        <i class="fas fa-money-bill-wave"></i> Cost (GHS)
-                    </label>
-                    <input type="number" 
-                           id="cost" 
-                           class="modal-form-input" 
-                           min="0"
-                           step="0.01"
-                           placeholder="Enter cost in Ghana Cedis">
-                </div>
-
-                <div class="modal-form-group">
-                    <label class="modal-form-label" for="notes">
-                        <i class="far fa-sticky-note"></i> Notes
-                    </label>
-                    <textarea id="notes" 
-                              class="modal-form-textarea" 
-                              placeholder="Add any additional notes about this refill..."
-                              rows="3"></textarea>
-                </div>
-
-                <div class="form-errors" id="fuelFormErrors"></div>
-            </form>
-        `;
-    }
-
-    async submitFuelLog(modal, siteId) {
-        const form = document.getElementById('fuelLogForm');
-        if (!form) return;
-
-        const formData = this.getFormData(form);
-        const errors = this.validateFuelLog(formData);
-
-        if (errors.length > 0) {
-            this.showFormErrors('fuelFormErrors', errors);
+    
+    showFuelLogForm() {
+        if (this.sites.length === 0) {
+            showAlert('No sites available to log fuel', 'warning');
             return;
         }
-
+        
+        const modal = new FuelSiteSelectorModal(this.sites, (selectedSite) => {
+            this.showFuelLogModal(selectedSite.id, selectedSite.name);
+        });
+        modal.open();
+    }
+    
+    showFuelLogModal(siteId, siteName) {
+        const modal = new FuelLogModal(siteId, siteName, this.userProfile, async (formData) => {
+            await this.handleFuelLogSubmit(formData);
+        });
+        modal.open();
+    }
+    
+    async handleFuelLogSubmit(formData) {
         try {
-            modal.setLoading(true, 'Logging fuel...');
-            
-            const response = await fetch('/api/fuel', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                },
-                body: JSON.stringify(formData)
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to log fuel');
-            }
-
-            await response.json();
+            await siteService.addFuelLog(formData);
             
             showAlert('✅ Fuel logged successfully!', 'success');
             
-            this.updateSiteAfterFuelLog(siteId, formData);
-            this.addActivity('fuel', siteId, `Fuel refill - ${formData.fuelAmount} liters`);
+            this.updateSiteAfterFuelLog(formData.siteId, formData);
+            
+            this.addActivity('fuel', formData.siteId, `Fuel refill - ${formData.fuelAmount} liters`);
             
             this.updateActivitiesList();
+
         } catch (error) {
             console.error('Fuel log error:', error);
-            showAlert('❌ Failed to log fuel. Please try again.', 'error');
-        } finally {
-            modal.setLoading(false);
+            throw error;
         }
     }
-
-    getFormData(form) {
-        return {
-            siteId: form.dataset.siteId,
-            fuelDate: document.getElementById('fuelDate').value,
-            fuelAmount: parseFloat(document.getElementById('fuelAmount').value),
-            fuelType: document.getElementById('fuelType').value,
-            fuelSupplier: document.getElementById('fuelSupplier').value,
-            meterReading: document.getElementById('meterReading').value ? 
-                         parseFloat(document.getElementById('meterReading').value) : null,
-            cost: document.getElementById('cost').value ? 
-                  parseFloat(document.getElementById('cost').value) : null,
-            notes: document.getElementById('notes').value,
-            loggedBy: this.userProfile?.id || 'technician',
-            timestamp: new Date().toISOString()
-        };
+    
+    showMaintenanceForm() {
+        if (this.sites.length === 0) {
+            showAlert('No sites available for maintenance', 'warning');
+            return;
+        }
+        
+        const modal = new MaintenanceSiteSelectorModal(this.sites, (selectedSite) => {
+            this.showMaintenanceModal(selectedSite.id, selectedSite.name);
+        });
+        modal.open();
     }
-
-    validateFuelLog(formData) {
-        const errors = [];
-        if (!formData.fuelAmount || formData.fuelAmount <= 0) {
-            errors.push('Please enter a valid fuel amount');
-        }
-        if (!formData.fuelType) {
-            errors.push('Please select fuel type');
-        }
-        if (!formData.fuelDate) {
-            errors.push('Please select date and time');
-        }
-        return errors;
+    
+    showMaintenanceModal(siteId, siteName) {
+        const modal = new MaintenanceLogModal(siteId, siteName, this.userProfile, async (formData) => {
+            await this.handleMaintenanceLogSubmit(formData);
+        });
+        modal.open();
     }
+    
+    async handleMaintenanceLogSubmit(formData) {
+        try {
+            await siteService.addMaintenanceLog(formData);
+            
+            showAlert('✅ Maintenance logged successfully!', 'success');
+            
+            this.updateSiteAfterMaintenance(formData.siteId);
+            
+            this.addActivity('maintenance', formData.siteId, `${formData.type} maintenance completed`);
+            
+            this.updateActivitiesList();
 
-    showFormErrors(elementId, errors) {
-        const errorDiv = document.getElementById(elementId);
-        if (errorDiv) {
-            errorDiv.innerHTML = errors.map(e => `<div>• ${e}</div>`).join('');
-            errorDiv.style.display = 'block';
+        } catch (error) {
+            console.error('Maintenance log error:', error);
+            throw error;
         }
     }
+    
+    scheduleMaintenance(siteId, siteName) {
+        const modal = new MaintenanceSchedulerModal(siteId, siteName, this.userProfile, async (formData) => {
+            await this.handleMaintenanceScheduleSubmit(formData);
+        });
+        modal.open();
+    }
+    
+    async handleMaintenanceScheduleSubmit(formData) {
+        try {
+            // This should use siteService when available
+            showAlert('✅ Maintenance scheduled successfully!', 'success');
+            
+            this.alerts.unshift({
+                id: `alert-${Date.now()}`,
+                siteId: formData.siteId,
+                siteName: formData.siteName,
+                alertType: 'scheduled_maintenance',
+                severity: 'medium',
+                message: `Scheduled ${formData.maintenanceType} maintenance for ${formData.siteName}`,
+                dueDate: formData.startDate,
+                maintenanceType: formData.maintenanceType,
+                createdAt: new Date().toISOString(),
+                acknowledged: false
+            });
+            
+            this.updateAlertsDisplay();
 
+        } catch (error) {
+            console.error('Schedule maintenance error:', error);
+            throw error;
+        }
+    }
+    
+    // ===== HELPER METHODS =====
+    
     updateSiteAfterFuelLog(siteId, formData) {
         const siteIndex = this.sites.findIndex(s => s.id === siteId);
         if (siteIndex !== -1) {
@@ -1188,322 +1315,7 @@ attachQuickActions() {
             }
         }
     }
-
-    addActivity(type, siteId, description) {
-        const site = this.sites.find(s => s.id === siteId);
-        this.activities.unshift({
-            id: `activity-${Date.now()}`,
-            type,
-            siteId,
-            siteName: site?.name || 'Unknown Site',
-            description,
-            timestamp: new Date().toISOString(),
-            user: 'You'
-        });
-    }
-
-    showFuelLogForm() {
-        if (this.sites.length === 0) {
-            showAlert('No sites available to log fuel', 'warning');
-            return;
-        }
-
-        const sitesOptions = this.sites.map(site => 
-            `<option value="${site.id}">${site.name} (Fuel: ${site.fuelLevel}%)</option>`
-        ).join('');
-
-        const modal = new Modal({
-            id: 'fuelSiteSelector',
-            title: '<i class="fas fa-gas-pump"></i> Select Site for Fuel Log',
-            content: `
-                <div class="modal-form-group">
-                    <label class="modal-form-label" for="selectSite">
-                        <i class="fas fa-tower-cell"></i> Select Site
-                    </label>
-                    <select id="selectSite" class="modal-form-select" required>
-                        <option value="">Choose a site...</option>
-                        ${sitesOptions}
-                    </select>
-                </div>
-            `,
-            size: 'sm',
-            confirmText: 'Continue',
-            cancelText: 'Cancel',
-            onConfirm: () => {
-                const selectedSite = document.getElementById('selectSite').value;
-                if (!selectedSite) {
-                    showAlert('Please select a site', 'warning');
-                    return;
-                }
-                
-                const site = this.sites.find(s => s.id === selectedSite);
-                if (site) {
-                    modal.close();
-                    setTimeout(() => this.showFuelLogModal(site.id, site.name), 300);
-                }
-            }
-        });
-
-        modal.open();
-    }
-
-    showMaintenanceModal(siteId = null, siteName = '') {
-        if (!siteId) {
-            this.showMaintenanceForm();
-            return;
-        }
-
-        const modal = new Modal({
-            id: 'maintenanceLogModal',
-            title: `<i class="fas fa-tools"></i> Log Maintenance`,
-            content: this.getMaintenanceLogFormHTML(siteId, siteName),
-            size: 'lg',
-            confirmText: 'Log Maintenance',
-            cancelText: 'Cancel',
-            confirmButtonClass: 'btn-primary',
-            onConfirm: () => this.submitMaintenanceLog(modal, siteId)
-        });
-
-        modal.open();
-    }
-
-    getMaintenanceLogFormHTML(siteId, siteName) {
-        const currentDateTime = new Date().toISOString().slice(0, 16);
-        const userName = `${this.userProfile?.firstName || ''} ${this.userProfile?.lastName || ''}`.trim();
-        
-        return `
-            <form id="maintenanceLogForm" data-site-id="${siteId}">
-                <div class="modal-form-group">
-                    <div class="modal-form-row">
-                        <div class="site-info">
-                            <div class="modal-form-label">Site</div>
-                            <div class="site-display">
-                                <strong>${siteName}</strong> (ID: ${siteId})
-                            </div>
-                        </div>
-                        <div>
-                            <label class="modal-form-label" for="maintenanceDate">
-                                <i class="far fa-calendar"></i> Date & Time
-                            </label>
-                            <input type="datetime-local" 
-                                   id="maintenanceDate" 
-                                   class="modal-form-input"
-                                   value="${currentDateTime}"
-                                   required>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="modal-form-group">
-                    <label class="modal-form-label" for="maintenanceType">
-                        <i class="fas fa-cog"></i> Maintenance Type
-                    </label>
-                    <select id="maintenanceType" class="modal-form-select" required>
-                        <option value="">Select type</option>
-                        <option value="preventive">Preventive Maintenance</option>
-                        <option value="corrective">Corrective Maintenance</option>
-                        <option value="emergency">Emergency Repair</option>
-                        <option value="routine">Routine Check</option>
-                        <option value="inspection">Site Inspection</option>
-                    </select>
-                </div>
-
-                <div class="modal-form-group">
-                    <label class="modal-form-label" for="description">
-                        <i class="fas fa-clipboard"></i> Description
-                    </label>
-                    <textarea id="description" 
-                              class="modal-form-textarea" 
-                              placeholder="Describe what maintenance was performed..."
-                              rows="3"
-                              required></textarea>
-                </div>
-
-                <div class="modal-form-group">
-                    <label class="modal-form-label" for="technician">
-                        <i class="fas fa-user-hard-hat"></i> Technician Name
-                    </label>
-                    <input type="text" 
-                           id="technician" 
-                           class="modal-form-input" 
-                           value="${userName || 'Technician'}"
-                           required>
-                </div>
-
-                <div class="modal-form-row">
-                    <div class="modal-form-group">
-                        <label class="modal-form-label" for="hoursSpent">
-                            <i class="fas fa-clock"></i> Hours Spent
-                        </label>
-                        <input type="number" 
-                               id="hoursSpent" 
-                               class="modal-form-input" 
-                               min="0.5" 
-                               max="24" 
-                               step="0.5"
-                               placeholder="e.g., 2.5"
-                               required>
-                    </div>
-
-                    <div class="modal-form-group">
-                        <label class="modal-form-label" for="cost">
-                            <i class="fas fa-money-bill-wave"></i> Cost (GHS)
-                        </label>
-                        <input type="number" 
-                               id="cost" 
-                               class="modal-form-input" 
-                               min="0"
-                               step="0.01"
-                               placeholder="Enter cost">
-                    </div>
-                </div>
-
-                <div class="modal-form-group">
-                    <label class="modal-form-label" for="partsUsed">
-                        <i class="fas fa-cogs"></i> Parts Used
-                    </label>
-                    <textarea id="partsUsed" 
-                              class="modal-form-textarea" 
-                              placeholder="List any parts replaced or used..."
-                              rows="2"></textarea>
-                </div>
-
-                <div class="modal-form-group">
-                    <label class="modal-form-label" for="nextMaintenance">
-                        <i class="fas fa-calendar-check"></i> Next Maintenance Due
-                    </label>
-                    <input type="date" 
-                           id="nextMaintenance" 
-                           class="modal-form-input"
-                           min="${new Date().toISOString().split('T')[0]}">
-                    <div class="modal-form-helper">
-                        Recommended: 30 days for preventive maintenance
-                    </div>
-                </div>
-
-                <div class="modal-form-group">
-                    <div class="modal-form-row">
-                        <div>
-                            <label class="modal-form-label">
-                                <i class="fas fa-check-circle"></i> Status
-                            </label>
-                            <div class="radio-group">
-                                <label class="radio-label">
-                                    <input type="radio" name="status" value="completed" checked>
-                                    <span>Completed</span>
-                                </label>
-                                <label class="radio-label">
-                                    <input type="radio" name="status" value="in_progress">
-                                    <span>In Progress</span>
-                                </label>
-                                <label class="radio-label">
-                                    <input type="radio" name="status" value="scheduled">
-                                    <span>Scheduled</span>
-                                </label>
-                            </div>
-                        </div>
-
-                        <div>
-                            <label class="modal-form-label">
-                                <i class="fas fa-exclamation-triangle"></i> Priority
-                            </label>
-                            <div class="radio-group">
-                                <label class="radio-label">
-                                    <input type="radio" name="priority" value="low">
-                                    <span class="priority-low">Low</span>
-                                </label>
-                                <label class="radio-label">
-                                    <input type="radio" name="priority" value="medium" checked>
-                                    <span class="priority-medium">Medium</span>
-                                </label>
-                                <label class="radio-label">
-                                    <input type="radio" name="priority" value="high">
-                                    <span class="priority-high">High</span>
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="form-errors" id="maintenanceFormErrors"></div>
-            </form>
-        `;
-    }
-
-    async submitMaintenanceLog(modal, siteId) {
-        const form = document.getElementById('maintenanceLogForm');
-        if (!form) return;
-
-        const formData = this.getMaintenanceFormData(form);
-        const errors = this.validateMaintenanceLog(formData);
-
-        if (errors.length > 0) {
-            this.showFormErrors('maintenanceFormErrors', errors);
-            return;
-        }
-
-        try {
-            modal.setLoading(true, 'Logging maintenance...');
-            
-            const response = await fetch('/api/maintenance', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                },
-                body: JSON.stringify(formData)
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to log maintenance');
-            }
-
-            await response.json();
-            
-            showAlert('✅ Maintenance logged successfully!', 'success');
-            
-            this.updateSiteAfterMaintenance(siteId);
-            this.addActivity('maintenance', siteId, `${formData.type} maintenance completed`);
-            
-            this.updateActivitiesList();
-        } catch (error) {
-            console.error('Maintenance log error:', error);
-            showAlert('❌ Failed to log maintenance. Please try again.', 'error');
-        } finally {
-            modal.setLoading(false);
-        }
-    }
-
-    getMaintenanceFormData(form) {
-        return {
-            siteId: form.dataset.siteId,
-            date: document.getElementById('maintenanceDate').value,
-            type: document.getElementById('maintenanceType').value,
-            description: document.getElementById('description').value,
-            technician: document.getElementById('technician').value,
-            hoursSpent: parseFloat(document.getElementById('hoursSpent').value),
-            cost: document.getElementById('cost').value ? 
-                  parseFloat(document.getElementById('cost').value) : null,
-            partsUsed: document.getElementById('partsUsed').value,
-            nextMaintenanceDate: document.getElementById('nextMaintenance').value,
-            status: document.querySelector('input[name="status"]:checked').value,
-            priority: document.querySelector('input[name="priority"]:checked').value,
-            loggedBy: this.userProfile?.id || 'technician',
-            timestamp: new Date().toISOString()
-        };
-    }
-
-    validateMaintenanceLog(formData) {
-        const errors = [];
-        if (!formData.type) errors.push('Please select maintenance type');
-        if (!formData.description) errors.push('Please enter description');
-        if (!formData.technician) errors.push('Please enter technician name');
-        if (!formData.hoursSpent || formData.hoursSpent <= 0) {
-            errors.push('Please enter valid hours spent');
-        }
-        return errors;
-    }
-
+    
     updateSiteAfterMaintenance(siteId) {
         const siteIndex = this.sites.findIndex(s => s.id === siteId);
         if (siteIndex !== -1) {
@@ -1519,127 +1331,58 @@ attachQuickActions() {
             }
         }
     }
-
-    showMaintenanceForm() {
-        if (this.sites.length === 0) {
-            showAlert('No sites available for maintenance', 'warning');
-            return;
-        }
-
-        const sitesOptions = this.sites.map(site => 
-            `<option value="${site.id}">${site.name} (Status: ${site.maintenanceStatus})</option>`
-        ).join('');
-
-        const modal = new Modal({
-            id: 'maintenanceSiteSelector',
-            title: '<i class="fas fa-tools"></i> Select Site for Maintenance',
-            content: `
-                <div class="modal-form-group">
-                    <label class="modal-form-label" for="selectSite">
-                        <i class="fas fa-tower-cell"></i> Select Site
-                    </label>
-                    <select id="selectSite" class="modal-form-select" required>
-                        <option value="">Choose a site...</option>
-                        ${sitesOptions}
-                    </select>
-                </div>
-            `,
-            size: 'sm',
-            confirmText: 'Continue',
-            cancelText: 'Cancel',
-            onConfirm: () => {
-                const selectedSite = document.getElementById('selectSite').value;
-                if (!selectedSite) {
-                    showAlert('Please select a site', 'warning');
-                    return;
-                }
-                
-                const site = this.sites.find(s => s.id === selectedSite);
-                if (site) {
-                    modal.close();
-                    setTimeout(() => this.showMaintenanceModal(site.id, site.name), 300);
-                }
-            }
-        });
-
-        modal.open();
-    }
-
-    // ===== SYNC METHODS =====
     
-    async syncOfflineData() {
-        try {
-            const syncBtn = document.getElementById('syncDataBtn');
-            setButtonLoading(syncBtn, true, 'Syncing...');
+    addActivity(type, siteId, description) {
+        const site = this.sites.find(s => s.id === siteId);
+        this.activities.unshift({
+            id: `activity-${Date.now()}`,
+            type,
+            siteId,
+            siteName: site?.name || 'Unknown Site',
+            description,
+            timestamp: new Date().toISOString(),
+            user: 'You'
+        });
+    }
+    
+    // ===== SITE ACTIONS =====
+    
+    showFuelLogFormForSite(siteId, siteName) {
+        console.log(`⛽ Logging fuel for site: ${siteId} - ${siteName}`);
+        this.showFuelLogModal(siteId, siteName);
+    }
+
+    showMaintenanceFormForSite(siteId, siteName) {
+        console.log(`🔧 Logging maintenance for site: ${siteId} - ${siteName}`);
+        this.showMaintenanceModal(siteId, siteName);
+    }
+
+    viewSiteDetails(siteId) {
+        console.log(`🔍 Viewing details for site: ${siteId}`);
+        showAlert(`Site ${siteId} details will be shown in the next phase`, 'info');
+    }
+
+    // ===== ALERT ACTIONS =====
+    
+    acknowledgeAlert(alertId) {
+        console.log(`✅ Acknowledging alert: ${alertId}`);
+        
+        const alertIndex = this.alerts.findIndex(a => a.id === alertId);
+        if (alertIndex !== -1) {
+            this.alerts[alertIndex].acknowledged = true;
             
-            console.log('🔄 Starting data sync...');
-            
-            const syncQueue = await this.getSyncQueue();
-            
-            if (syncQueue.length === 0) {
-                showAlert('✅ No offline data to sync', 'success');
-                return;
+            const alertComponent = this.alertComponents.find(ac => ac.alertData.id === alertId);
+            if (alertComponent?.updateData) {
+                alertComponent.updateData({ acknowledged: true });
             }
             
-            const syncData = {
-                operations: syncQueue,
-                lastSyncTimestamp: localStorage.getItem('lastSyncTimestamp') || new Date().toISOString(),
-                deviceId: localStorage.getItem('deviceId') || `device-${Date.now()}`,
-                appVersion: '1.0.0',
-                deviceInfo: {
-                    userAgent: navigator.userAgent,
-                    platform: navigator.platform,
-                    language: navigator.language
-                }
-            };
+            // Remove from display
+            this.updateAlertsDisplay();
             
-            const response = await fetch('/api/sync', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                },
-                body: JSON.stringify(syncData)
-            });
-            
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.message || 'Sync failed');
-            }
-            
-            const result = await response.json();
-            
-            await this.clearSyncQueue();
-            localStorage.setItem('lastSyncTimestamp', result.timestamp || new Date().toISOString());
-            await this.loadDashboardData();
-            
-            showAlert(`✅ Sync completed! Processed ${syncQueue.length} operations`, 'success');
-            
-        } catch (error) {
-            console.error('❌ Sync failed:', error);
-            showAlert(`Sync failed: ${error.message}`, 'error');
-        } finally {
-            const syncBtn = document.getElementById('syncDataBtn');
-            setButtonLoading(syncBtn, false);
+            showAlert('Alert acknowledged successfully', 'success');
         }
     }
-
-    async getSyncQueue() {
-        // TODO: Implement actual sync queue from IndexedDB
-        return [];
-    }
-
-    async clearSyncQueue() {
-        // TODO: Implement clearing sync queue from IndexedDB
-        console.log('Clearing sync queue...');
-    }
-
-    showNotifications() {
-        const unreadCount = this.alerts.filter(a => !a.acknowledged).length;
-        console.log('🔔 Showing notifications...');
-        showAlert(`You have ${unreadCount} unread notifications`, 'info');
-    }
-
+    
     // ===== UPDATE METHODS =====
     
     updateSitesDisplay() {
@@ -1656,6 +1399,19 @@ attachQuickActions() {
             alertsContainer.innerHTML = this.renderAlerts();
             setTimeout(() => this.renderComponents(), 100);
         }
+        
+        // Update notification badge
+        const notificationBadge = document.querySelector('.notification-badge');
+        const unreadCount = this.alerts.filter(a => !a.acknowledged).length;
+        
+        if (notificationBadge) {
+            if (unreadCount > 0) {
+                notificationBadge.textContent = unreadCount;
+                notificationBadge.style.display = 'block';
+            } else {
+                notificationBadge.style.display = 'none';
+            }
+        }
     }
 
     updateActivitiesList() {
@@ -1664,7 +1420,58 @@ attachQuickActions() {
             activitiesList.innerHTML = this.renderActivitiesList();
         }
     }
+    
+    // ===== SYNC METHOD =====
+    
+    async syncOfflineData() {
+        try {
+            const syncBtn = document.getElementById('syncDataBtn');
+            setButtonLoading(syncBtn, true, 'Syncing...');
+            
+            console.log('🔄 Starting data sync...');
+            
+            const result = await siteService.syncOfflineData();
+            
+            showAlert(`✅ Sync completed! Processed ${result.processed || 0} operations`, 'success');
+            
+            await this.loadDashboardData();
+            
+        } catch (error) {
+            console.error('❌ Sync failed:', error);
+            showAlert(`Sync failed: ${error.message}`, 'error');
+        } finally {
+            const syncBtn = document.getElementById('syncDataBtn');
+            setButtonLoading(syncBtn, false);
+        }
+    }
 
+    showNotifications() {
+        const unreadCount = this.alerts.filter(a => !a.acknowledged).length;
+        console.log('🔔 Showing notifications...');
+        
+        if (unreadCount > 0) {
+            showAlert(`You have ${unreadCount} unread notification${unreadCount > 1 ? 's' : ''}`, 'info');
+            // Scroll to alerts section
+            document.querySelector('.alerts-container')?.scrollIntoView({ behavior: 'smooth' });
+        } else {
+            showAlert('No unread notifications', 'info');
+        }
+    }
+
+    debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+    
+    // ===== DESTROY METHOD =====
+    
     destroy() {
         console.log('🧹 Cleaning up dashboard...');
         

@@ -6,6 +6,7 @@ NetisTrackGh/
 │   ├── 📄 netistrackgh.json
 │   ├── 📄 .env
 │   ├── 📄 .gitignore
+│   ├── 📂 node_modules/
 │   ├── 📂 scripts/
 │   │   ├── 📄 deploy.js
 │   │   └── 📄 seedData.js
@@ -59,6 +60,7 @@ NetisTrackGh/
     │   ├── 📂 components/
     │   │   ├── 📄 fuel-gauge.js
     │   │   ├── 📄 maintenance-alert.js
+    │   │   ├── 📄 modal.js
     │   │   └── 📄 site-card.js
     │   ├── 📂 css/
     │   │   └── 📄 style.css
@@ -78,6 +80,14 @@ NetisTrackGh/
     │       ├── 📂 dashboard/
     │       │   ├── 📄 analytics.js
     │       │   └── 📄 main.js
+            ── 📂 modals/                    # NEW: All modals go here
+            │   ├── 📄 FuelLogModal.js
+            │   ├── 📄 MaintenanceLogModal.js
+            │   ├── 📄 AddSiteModal.js
+            │   ├── 📄 MaintenanceSchedulerModal.js
+            │   ├── 📄 FuelSiteSelectorModal.js
+            │   ├── 📄 MaintenanceSiteSelectorModal.js
+            │   └── 📄 index.js  
     │       ├── 📂 offline/
     │       │   ├── 📄 indexeddb.js
     │       │   ├── 📄 offlineManager.js
@@ -87,6 +97,7 @@ NetisTrackGh/
     │       │   └── 📄 siteDetails.js
     │       ├── 📂 services/
     │       │   ├── 📄 authService.js
+    │       │   ├── 📄 apiService.js
     │       │   ├── 📄 firebaseConfig.js
     │       │   └── 📄 siteService.js
     │       ├── 📂 styles/

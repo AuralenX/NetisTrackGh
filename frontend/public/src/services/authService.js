@@ -301,6 +301,25 @@ export const authService = {
         }
     },
 
+    getUserProfile() {
+        try {
+            const userStr = localStorage.getItem('auth_user') || sessionStorage.getItem('auth_user');
+            console.log('🔍 getUserProfile - userStr from storage:', userStr);
+            
+            if (!userStr) {
+                console.log('🔍 getUserProfile - No user string found');
+                return null;
+            }
+            
+            const user = JSON.parse(userStr);
+            console.log('🔍 getUserProfile - Parsed user:', user);
+            return user;
+        } catch (error) {
+            console.error('❌ Error parsing user profile:', error);
+            return null;
+        }
+    },
+
     getUserRole() {
         return localStorage.getItem('auth_role');
     },

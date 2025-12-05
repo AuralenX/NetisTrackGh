@@ -254,7 +254,14 @@ class NetisTrackApp {
                     // 404 page
                     this.currentPage = {
                         render: () => `
-                            <div style="padding: 40px; text-align: center;">
+                            <div style="padding: 20px;
+                                display: flex;
+                                width: 100%;
+                                height: 100vh;
+                                align-items: center;
+                                flex-direction: column;
+                                justify-content: center;
+                            ">
                                 <h2>Page Not Found</h2>
                                 <p>The page you're looking for doesn't exist.</p>
                                 <a href="#login" style="

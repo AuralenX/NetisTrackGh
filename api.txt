@@ -1,0 +1,129 @@
+API Documentation: http://localhost:3000/docs
+❤️  Health Check: http://localhost:3000/health
+📡 API Status: http://localhost:3000/api/status
+
+Available API Endpoints:
+✅ Authentication: http://localhost:3000/api/auth
+POST
+/auth/verify
+Verify user credentials with email and password
+
+GET
+/auth/profile
+Get current user profile
+
+PUT
+/auth/profile
+Update user profile
+
+GET
+/auth/users
+Get all users (Admin only)
+
+POST
+/auth/assign-role
+Assign role to user (Admin only)
+
+POST
+/auth/refresh
+Refresh JWT token
+
+POST
+/auth/reset-password
+Send password reset email
+
+POST
+/auth/change-password
+Change user password
+
+POST
+/auth/logout
+User logout
+
+POST
+/auth/security-logs
+Log security event
+
+GET
+/auth/security-logs
+Get security logs
+
+✅ Sites: http://localhost:3000/api/sites
+
+GET
+/sites
+Get all sites for current user
+
+POST
+/sites
+Create a new site with manual siteId
+
+GET
+/sites/search
+Search sites by siteId or name
+
+GET
+/sites/{siteId}
+Get site by siteId
+
+PUT
+/sites/{siteId}
+Update a site by siteId
+
+DELETE
+/sites/{siteId}
+Delete a site by siteId (Admin only)
+
+✅ Fuel: http://localhost:3000/api/fuel
+
+POST
+/fuel
+Add fuel log entry
+
+GET
+/fuel/site/{siteId}
+Get fuel logs for a site
+
+GET
+/fuel/consumption/{siteId}
+Get fuel consumption analytics
+
+POST
+/fuel/verify/{logId}
+Verify fuel log (Supervisor/Admin only)
+
+✅ Maintenance: http://localhost:3000/api/maintenance
+
+POST
+/maintenance
+Add maintenance log
+
+GET
+/maintenance/site/{siteId}
+Get maintenance logs for a site
+
+GET
+/maintenance/upcoming
+Get upcoming maintenance
+
+GET
+/maintenance/analytics/{siteId}
+Get maintenance analytics
+
+POST
+/maintenance/verify/{logId}
+Verify maintenance log (Supervisor/Admin only)
+
+✅ Sync: http://localhost:3000/api/sync
+
+POST
+/sync
+Process offline sync queue
+
+GET
+/sync/status
+Get sync status
+
+POST
+/sync/conflicts
+Resolve sync conflicts

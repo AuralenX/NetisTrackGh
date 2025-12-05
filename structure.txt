@@ -87,14 +87,22 @@ NetisTrackGh/
             │   ├── 📄 MaintenanceSchedulerModal.js
             │   ├── 📄 FuelSiteSelectorModal.js
             │   ├── 📄 MaintenanceSiteSelectorModal.js
-            │   └── 📄 index.js  
+            │   └── 📄 index.js  (exports all modals)
     │       ├── 📂 offline/
     │       │   ├── 📄 indexeddb.js
     │       │   ├── 📄 offlineManager.js
     │       │   └── 📄 syncQueue.js
     │       ├── 📂 pages/
-    │       │   ├── 📄 home.js
-    │       │   └── 📄 siteDetails.js
+                ├── 📄 siteDetails.js
+                ├── 📄 SitesPage.js
+                ├── 📄 FuelLogsPage.js
+                ├── 📄 MaintenancePage.js
+                ├── 📄 ReportsPage.js
+                ├── 📄 ProfilePage.js
+                ├── 📄 SettingsPage.js
+                ├── 📄 HelpPage.js
+                ├── 📄 AboutPage.js
+                └── 📄 index.js (exports all pages)
     │       ├── 📂 services/
     │       │   ├── 📄 authService.js
     │       │   ├── 📄 apiService.js
@@ -102,6 +110,7 @@ NetisTrackGh/
     │       │   └── 📄 siteService.js
     │       ├── 📂 styles/
     │       │   ├── 📄 dashboard.css
+    │       │   ├── 📄 pages.css
     │       │   └── 📄 main.css
     │       └── 📂 utils/
     │           ├── 📄 helpers.js

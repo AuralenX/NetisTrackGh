@@ -9,6 +9,6 @@ node_modules/
 
 # logs 
 logs/
-*.log
-logs/*.log
+logs/combined.log
+logs/error.log
 npm-debug.log*

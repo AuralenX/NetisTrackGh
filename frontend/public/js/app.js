@@ -16,7 +16,7 @@ class NetisTrackApp {
 
             // Load dashboard CSS
             this.loadDashboardStyles();
-            
+
             // Initialize EmailJS
             await this.initializeEmailJS();
             
@@ -64,6 +64,20 @@ class NetisTrackApp {
         document.head.appendChild(link);
         
         console.log('✅ Dashboard styles loaded');
+    }
+
+    loadPagesStyles() {
+        // Check if dashboard styles are already loaded
+        if (document.getElementById('pages-styles')) return;
+        
+        // Create link element for dashboard styles
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = 'src/styles/pages.css'; 
+        link.id = 'pages-styles';
+        document.head.appendChild(link);
+        
+        console.log('✅ Pages styles loaded');
     }
 
     initializeEmailJS() {
@@ -248,6 +262,53 @@ class NetisTrackApp {
                 case 'analytics':
                     pageModule = await import('../src/dashboard/analytics.js');
                     PageClass = pageModule.AnalyticsDashboard;
+                    break;
+                
+                case 'sites':
+                    // Load SitesPage CSS
+                    this.loadPagesStyles();
+                    pageModule = await import('../src/pages/SitesPage.js');
+                    PageClass = pageModule.default;
+                    break;
+                    
+                case 'fuel':
+                    pageModule = await import('../src/pages/FuelLogsPage.js');
+                    PageClass = pageModule.default;
+                    break;
+                    
+                case 'maintenance':
+                    pageModule = await import('../src/pages/MaintenancePage.js');
+                    PageClass = pageModule.default;
+                    break;
+                    
+                case 'reports':
+                    pageModule = await import('../src/pages/ReportsPage.js');
+                    PageClass = pageModule.default;
+                    break;
+                    
+                case 'profile':
+                    pageModule = await import('../src/pages/ProfilePage.js');
+                    PageClass = pageModule.default;
+                    break;
+                    
+                case 'settings':
+                    pageModule = await import('../src/pages/SettingsPage.js');
+                    PageClass = pageModule.default;
+                    break;
+                    
+                case 'help':
+                    pageModule = await import('../src/pages/HelpPage.js');
+                    PageClass = pageModule.default;
+                    break;
+                    
+                case 'about':
+                    pageModule = await import('../src/pages/AboutPage.js');
+                    PageClass = pageModule.default;
+                    break;
+                    
+                case 'site-details':
+                    pageModule = await import('../src/pages/siteDetails.js');
+                    PageClass = pageModule.default;
                     break;
                     
                 default:

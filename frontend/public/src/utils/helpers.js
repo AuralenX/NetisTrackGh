@@ -376,6 +376,39 @@ export function formatDateTime(dateString) {
 }
 
 /**
+ * Format number as currency for Ghana (GHS) by default
+ * @param {number|string} amount - Numeric amount
+ * @param {string} currency - Currency code (default: 'GHS')
+ * @returns {string} - Formatted currency string
+ */
+export function formatCurrency(amount, currency = 'GHS') {
+    try {
+        if (amount === null || amount === undefined || amount === '') return 'N/A';
+        const num = typeof amount === 'string' ? parseFloat(amount) : Number(amount);
+        if (Number.isNaN(num)) return String(amount);
+        return new Intl.NumberFormat('en-GH', { style: 'currency', currency }).format(num);
+    } catch (error) {
+        console.error('❌ Currency formatting error:', error);
+        return String(amount);
+    }
+}
+
+/**
+ * Format time for display (HH:MM)
+ * @param {string} dateString - ISO date string
+ * @returns {string} - Formatted time (e.g., "14:35")
+ */
+export function formatTime(dateString) {
+    try {
+        const d = new Date(dateString);
+        return d.toLocaleTimeString('en-GH', { hour: '2-digit', minute: '2-digit', hour12: false });
+    } catch (error) {
+        console.error('❌ Time formatting error:', error);
+        return '';
+    }
+}
+
+/**
  * Escape HTML to prevent XSS
  * @param {string} text - Text to escape
  * @returns {string} - Escaped text

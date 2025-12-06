@@ -1,12 +1,14 @@
 // NetisTrackGh Authentication Service v2.0
 // Complete backend-only authentication with professional features
+import { API_BASE_URL, CLIENT_VERSION } from './config.js';
+
 export const authService = {
     
     // ============================
     // CONFIGURATION
     // ============================
     config: {
-        backendBaseUrl: 'http://localhost:3000/api', 
+        backendBaseUrl: API_BASE_URL,
         tokenRefreshInterval: 15 * 60 * 1000, // 15 mins
         maxRetryAttempts: 3,
         tokenExpiryBuffer: 5 * 60 * 1000, // 5 min buffer before expiry

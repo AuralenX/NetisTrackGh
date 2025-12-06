@@ -1,9 +1,10 @@
 import { authService } from './authService.js';
 import { showAlert } from '../utils/helpers.js';
+import { API_BASE_URL, CLIENT_VERSION } from './config.js';
 
 export class ApiService {
     constructor() {
-        this.baseURL = '/api/v1'; // Update with your actual API base URL
+        this.baseURL = API_BASE_URL;
     }
 
     async request(endpoint, options = {}) {
@@ -12,6 +13,7 @@ export class ApiService {
             
             const headers = {
                 'Content-Type': 'application/json',
+                'X-Client-Version': CLIENT_VERSION,
                 ...options.headers
             };
 
@@ -85,9 +87,9 @@ export class ApiService {
     // Fuel Log API Methods
     async logFuel(siteId, data) {
         try {
-            return await this.request(`/sites/${siteId}/fuel-logs`, {
+            return await this.request(`/fuel`, {
                 method: 'POST',
-                body: JSON.stringify(data)
+                body: JSON.stringify({ siteId, ...data })
             });
         } catch (error) {
             console.error('Fuel log failed:', error);
@@ -98,7 +100,7 @@ export class ApiService {
     async getFuelLogs(siteId, params = {}) {
         try {
             const queryString = new URLSearchParams(params).toString();
-            return await this.request(`/sites/${siteId}/fuel-logs${queryString ? `?${queryString}` : ''}`);
+            return await this.request(`/fuel/site/${siteId}${queryString ? `?${queryString}` : ''}`);
         } catch (error) {
             console.error('Failed to get fuel logs:', error);
             throw error;
@@ -108,9 +110,9 @@ export class ApiService {
     // Maintenance API Methods
     async logMaintenance(siteId, data) {
         try {
-            return await this.request(`/sites/${siteId}/maintenance`, {
+            return await this.request(`/maintenance`, {
                 method: 'POST',
-                body: JSON.stringify(data)
+                body: JSON.stringify({ siteId, ...data })
             });
         } catch (error) {
             console.error('Maintenance log failed:', error);
@@ -120,9 +122,9 @@ export class ApiService {
 
     async scheduleMaintenance(siteId, data) {
         try {
-            return await this.request(`/sites/${siteId}/maintenance/schedule`, {
+            return await this.request(`/maintenance`, {
                 method: 'POST',
-                body: JSON.stringify(data)
+                body: JSON.stringify({ siteId, scheduled: true, ...data })
             });
         } catch (error) {
             console.error('Maintenance scheduling failed:', error);
@@ -133,7 +135,7 @@ export class ApiService {
     async getMaintenanceHistory(siteId, params = {}) {
         try {
             const queryString = new URLSearchParams(params).toString();
-            return await this.request(`/sites/${siteId}/maintenance/history${queryString ? `?${queryString}` : ''}`);
+            return await this.request(`/maintenance/site/${siteId}${queryString ? `?${queryString}` : ''}`);
         } catch (error) {
             console.error('Failed to get maintenance history:', error);
             throw error;
@@ -176,24 +178,11 @@ export class ApiService {
 
     // Alerts API Methods
     async acknowledgeAlert(alertId) {
-        try {
-            return await this.request(`/alerts/${alertId}/acknowledge`, {
-                method: 'POST'
-            });
-        } catch (error) {
-            console.error('Acknowledge alert failed:', error);
-            throw error;
-        }
+        return Promise.reject(new Error('Alerts API not supported by backend'));
     }
 
     async getAlerts(params = {}) {
-        try {
-            const queryString = new URLSearchParams(params).toString();
-            return await this.request(`/alerts${queryString ? `?${queryString}` : ''}`);
-        } catch (error) {
-            console.error('Failed to get alerts:', error);
-            throw error;
-        }
+        return Promise.reject(new Error('Alerts API not supported by backend'));
     }
 }
 

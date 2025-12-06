@@ -1,12 +1,14 @@
 // NetisTrackGh Site Service v1.0
 // Complete site, fuel, and maintenance management service
+import { API_BASE_URL, CLIENT_VERSION } from './config.js';
+
 export const siteService = {
     
     // ============================
     // CONFIGURATION
     // ============================
     config: {
-        backendBaseUrl: 'http://localhost:3000/api',
+        backendBaseUrl: API_BASE_URL,
         maxRetryAttempts: 3,
         cacheDuration: 5 * 60 * 1000, // 5 minutes
         offlineMode: false,
@@ -252,7 +254,7 @@ export const siteService = {
     // Search sites
     async searchSites(query, options = {}) {
         try {
-            const params = new URLSearchParams({ q: query });
+            const params = new URLSearchParams({ query: query });
             if (options.limit) params.append('limit', options.limit);
             if (options.page) params.append('page', options.page);
             

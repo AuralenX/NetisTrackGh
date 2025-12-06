@@ -1,23 +1,27 @@
 // frontend/src/modals/MaintenanceLogModal.js
 import { Modal } from '../../components/modal.js';
+import { showAlert } from '../utils/helpers.js';
+import { siteService } from '../services/siteService.js';
+import { validators } from '../utils/validators.js';
 
 class MaintenanceLogModal {
-    constructor(siteId, siteName, userProfile, onSubmit) {
+    constructor(siteId, siteName, userProfile, onSuccess) {
         this.siteId = siteId;
         this.siteName = siteName;
         this.userProfile = userProfile;
-        this.onSubmit = onSubmit;
+        this.onSuccess = onSuccess;
         this.modal = null;
+        this.technicianId = userProfile?.id || userProfile?.userId || 'unknown';
+        this.partsUsed = [];
     }
 
     open() {
         const currentDateTime = new Date().toISOString().slice(0, 16);
-        const userName = `${this.userProfile?.firstName || ''} ${this.userProfile?.lastName || ''}`.trim();
         
         this.modal = new Modal({
             id: 'maintenanceLogModal',
             title: `<i class="fas fa-tools"></i> Log Maintenance`,
-            content: this.render(currentDateTime, userName),
+            content: this.render(currentDateTime),
             size: 'lg',
             confirmText: 'Log Maintenance',
             cancelText: 'Cancel',
@@ -26,11 +30,13 @@ class MaintenanceLogModal {
         });
 
         this.modal.open();
+        this.attachEventListeners();
     }
 
-    render(currentDateTime, userName) {
+    render(currentDateTime) {
         return `
             <form id="maintenanceLogForm" data-site-id="${this.siteId}">
+                <!-- Site & Date Info -->
                 <div class="modal-form-group">
                     <div class="modal-form-row">
                         <div class="site-info">
@@ -39,9 +45,9 @@ class MaintenanceLogModal {
                                 <strong>${this.siteName}</strong> (ID: ${this.siteId})
                             </div>
                         </div>
-                        <div>
+                        <div style="flex: 1;">
                             <label class="modal-form-label" for="maintenanceDate">
-                                <i class="far fa-calendar"></i> Date & Time
+                                <i class="far fa-calendar"></i> Completion Date & Time *
                             </label>
                             <input type="datetime-local" 
                                    id="maintenanceDate" 
@@ -52,135 +58,149 @@ class MaintenanceLogModal {
                     </div>
                 </div>
 
+                <!-- Maintenance Type & Priority -->
+                <div class="modal-form-row">
+                    <div class="modal-form-group">
+                        <label class="modal-form-label" for="maintenanceType">
+                            <i class="fas fa-cogs"></i> Maintenance Type *
+                        </label>
+                        <select id="maintenanceType" class="modal-form-select" required>
+                            <option value="">Select type</option>
+                            <option value="routine">Routine</option>
+                            <option value="preventive">Preventive</option>
+                            <option value="corrective">Corrective</option>
+                            <option value="emergency">Emergency</option>
+                        </select>
+                    </div>
+
+                    <div class="modal-form-group">
+                        <label class="modal-form-label" for="priority">
+                            <i class="fas fa-exclamation"></i> Priority *
+                        </label>
+                        <select id="priority" class="modal-form-select" required>
+                            <option value="medium" selected>Medium</option>
+                            <option value="low">Low</option>
+                            <option value="high">High</option>
+                            <option value="critical">Critical</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Title & Description -->
                 <div class="modal-form-group">
-                    <label class="modal-form-label" for="maintenanceType">
-                        <i class="fas fa-cog"></i> Maintenance Type
+                    <label class="modal-form-label" for="maintenanceTitle">
+                        <i class="fas fa-heading"></i> Title *
                     </label>
-                    <select id="maintenanceType" class="modal-form-select" required>
-                        <option value="">Select type</option>
-                        <option value="preventive">Preventive Maintenance</option>
-                        <option value="corrective">Corrective Maintenance</option>
-                        <option value="emergency">Emergency Repair</option>
-                        <option value="routine">Routine Check</option>
-                        <option value="inspection">Site Inspection</option>
-                    </select>
+                    <input type="text" 
+                           id="maintenanceTitle" 
+                           class="modal-form-input" 
+                           placeholder="e.g., Generator Oil Change"
+                           maxlength="100"
+                           required>
                 </div>
 
                 <div class="modal-form-group">
                     <label class="modal-form-label" for="description">
-                        <i class="fas fa-clipboard"></i> Description
+                        <i class="fas fa-align-left"></i> Description *
                     </label>
                     <textarea id="description" 
                               class="modal-form-textarea" 
-                              placeholder="Describe what maintenance was performed..."
-                              rows="3"
+                              placeholder="Detailed description of maintenance work performed..."
+                              maxlength="1000"
+                              rows="4"
                               required></textarea>
                 </div>
 
-                <div class="modal-form-group">
-                    <label class="modal-form-label" for="technician">
-                        <i class="fas fa-user-hard-hat"></i> Technician Name
-                    </label>
-                    <input type="text" 
-                           id="technician" 
-                           class="modal-form-input" 
-                           value="${userName || 'Technician'}"
-                           required>
-                </div>
-
+                <!-- Status & Labor Hours -->
                 <div class="modal-form-row">
                     <div class="modal-form-group">
-                        <label class="modal-form-label" for="hoursSpent">
-                            <i class="fas fa-clock"></i> Hours Spent
+                        <label class="modal-form-label" for="status">
+                            <i class="fas fa-tasks"></i> Status *
+                        </label>
+                        <select id="status" class="modal-form-select" required>
+                            <option value="completed" selected>Completed</option>
+                            <option value="scheduled">Scheduled</option>
+                            <option value="in-progress">In Progress</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+                    </div>
+
+                    <div class="modal-form-group">
+                        <label class="modal-form-label" for="laborHours">
+                            <i class="fas fa-hourglass-half"></i> Labor Hours *
                         </label>
                         <input type="number" 
-                               id="hoursSpent" 
+                               id="laborHours" 
                                class="modal-form-input" 
-                               min="0.5" 
-                               max="24" 
+                               min="0"
                                step="0.5"
                                placeholder="e.g., 2.5"
                                required>
                     </div>
+                </div>
 
+                <!-- Cost & Generator Hours -->
+                <div class="modal-form-row">
                     <div class="modal-form-group">
-                        <label class="modal-form-label" for="cost">
-                            <i class="fas fa-money-bill-wave"></i> Cost (GHS)
+                        <label class="modal-form-label" for="totalCost">
+                            <i class="fas fa-money-bill-wave"></i> Total Cost (GHS)
                         </label>
                         <input type="number" 
-                               id="cost" 
+                               id="totalCost" 
                                class="modal-form-input" 
                                min="0"
                                step="0.01"
-                               placeholder="Enter cost">
+                               placeholder="Parts + labor cost">
+                    </div>
+
+                    <div class="modal-form-group">
+                        <label class="modal-form-label" for="generatorHours">
+                            <i class="fas fa-tachometer-alt"></i> Generator Hours
+                        </label>
+                        <input type="number" 
+                               id="generatorHours" 
+                               class="modal-form-input" 
+                               min="0"
+                               step="0.1"
+                               placeholder="Total run hours at time of maintenance">
                     </div>
                 </div>
 
+                <!-- Next Maintenance Date -->
                 <div class="modal-form-group">
-                    <label class="modal-form-label" for="partsUsed">
-                        <i class="fas fa-cogs"></i> Parts Used
-                    </label>
-                    <textarea id="partsUsed" 
-                              class="modal-form-textarea" 
-                              placeholder="List any parts replaced or used..."
-                              rows="2"></textarea>
-                </div>
-
-                <div class="modal-form-group">
-                    <label class="modal-form-label" for="nextMaintenance">
-                        <i class="fas fa-calendar-check"></i> Next Maintenance Due
+                    <label class="modal-form-label" for="nextMaintenanceDate">
+                        <i class="fas fa-calendar-check"></i> Next Maintenance Due Date
                     </label>
                     <input type="date" 
-                           id="nextMaintenance" 
-                           class="modal-form-input"
-                           min="${new Date().toISOString().split('T')[0]}">
-                    <div class="modal-form-helper">
-                        Recommended: 30 days for preventive maintenance
+                           id="nextMaintenanceDate" 
+                           class="modal-form-input">
+                </div>
+
+                <!-- Parts Used -->
+                <div class="modal-form-group">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <label class="modal-form-label">
+                            <i class="fas fa-boxes"></i> Parts Used
+                        </label>
+                        <button type="button" class="btn btn-sm btn-secondary" id="addPartBtn">
+                            + Add Part
+                        </button>
+                    </div>
+                    <div id="partsList" style="margin-bottom: 10px;">
+                        <!-- Parts added here dynamically -->
                     </div>
                 </div>
 
+                <!-- Notes -->
                 <div class="modal-form-group">
-                    <div class="modal-form-row">
-                        <div>
-                            <label class="modal-form-label">
-                                <i class="fas fa-check-circle"></i> Status
-                            </label>
-                            <div style="display: flex; gap: 1rem; margin-top: 0.5rem;">
-                                <label class="radio-label">
-                                    <input type="radio" name="status" value="completed" checked>
-                                    <span>Completed</span>
-                                </label>
-                                <label class="radio-label">
-                                    <input type="radio" name="status" value="in_progress">
-                                    <span>In Progress</span>
-                                </label>
-                                <label class="radio-label">
-                                    <input type="radio" name="status" value="scheduled">
-                                    <span>Scheduled</span>
-                                </label>
-                            </div>
-                        </div>
-
-                        <div>
-                            <label class="modal-form-label">
-                                <i class="fas fa-exclamation-triangle"></i> Priority
-                            </label>
-                            <div style="display: flex; gap: 1rem; margin-top: 0.5rem;">
-                                <label class="radio-label">
-                                    <input type="radio" name="priority" value="low">
-                                    <span style="color: #38a169">Low</span>
-                                </label>
-                                <label class="radio-label">
-                                    <input type="radio" name="priority" value="medium" checked>
-                                    <span style="color: #d69e2e">Medium</span>
-                                </label>
-                                <label class="radio-label">
-                                    <input type="radio" name="priority" value="high">
-                                    <span style="color: #e53e3e">High</span>
-                                </label>
-                            </div>
-                        </div>
-                    </div>
+                    <label class="modal-form-label" for="notes">
+                        <i class="far fa-sticky-note"></i> Notes
+                    </label>
+                    <textarea id="notes" 
+                              class="modal-form-textarea" 
+                              placeholder="Additional notes (max 500 chars)..."
+                              maxlength="500"
+                              rows="3"></textarea>
                 </div>
 
                 <div class="form-errors" id="maintenanceFormErrors" style="color: #e53e3e; font-size: 14px; margin-top: 10px; display: none;"></div>
@@ -188,58 +208,130 @@ class MaintenanceLogModal {
         `;
     }
 
-    getFormData() {
-        const statusRadio = document.querySelector('input[name="status"]:checked');
-        const priorityRadio = document.querySelector('input[name="priority"]:checked');
+    attachEventListeners() {
+        const addPartBtn = document.getElementById('addPartBtn');
+        if (addPartBtn) {
+            addPartBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.addPartRow();
+            });
+        }
+    }
+
+    addPartRow() {
+        const partsList = document.getElementById('partsList');
+        const partId = Date.now();
         
+        const partRow = document.createElement('div');
+        partRow.id = `part-${partId}`;
+        partRow.style.cssText = 'display: flex; gap: 8px; margin-bottom: 8px; padding: 8px; background: #f5f5f5; border-radius: 4px;';
+        partRow.innerHTML = `
+            <input type="text" 
+                   class="part-name" 
+                   placeholder="Part name" 
+                   style="flex: 1; padding: 6px 8px; border: 1px solid #ddd; border-radius: 3px;">
+            <input type="number" 
+                   class="part-qty" 
+                   placeholder="Qty" 
+                   min="1" 
+                   value="1"
+                   style="width: 60px; padding: 6px 8px; border: 1px solid #ddd; border-radius: 3px;">
+            <input type="number" 
+                   class="part-cost" 
+                   placeholder="Cost" 
+                   min="0" 
+                   step="0.01"
+                   style="width: 80px; padding: 6px 8px; border: 1px solid #ddd; border-radius: 3px;">
+            <input type="text" 
+                   class="part-number" 
+                   placeholder="Part #" 
+                   style="width: 80px; padding: 6px 8px; border: 1px solid #ddd; border-radius: 3px;">
+            <button type="button" class="btn btn-sm btn-danger" onclick="document.getElementById('part-${partId}').remove();">✕</button>
+        `;
+        
+        partsList.appendChild(partRow);
+    }
+
+    getPartsUsed() {
+        const partsList = document.getElementById('partsList');
+        const parts = [];
+        
+        partsList.querySelectorAll('div[id^="part-"]').forEach(row => {
+            const name = row.querySelector('.part-name')?.value;
+            const qty = row.querySelector('.part-qty')?.value;
+            const cost = row.querySelector('.part-cost')?.value;
+            const partNumber = row.querySelector('.part-number')?.value;
+            
+            if (name && qty) {
+                parts.push({
+                    name: name.trim(),
+                    quantity: parseInt(qty),
+                    ...(cost && { cost: parseFloat(cost) }),
+                    ...(partNumber && { partNumber: partNumber.trim() })
+                });
+            }
+        });
+        
+        return parts;
+    }
+
+    getFormData() {
         return {
             siteId: this.siteId,
-            date: document.getElementById('maintenanceDate')?.value || '',
-            type: document.getElementById('maintenanceType')?.value || '',
+            technicianId: this.technicianId,
+            maintenanceType: document.getElementById('maintenanceType')?.value || '',
+            title: document.getElementById('maintenanceTitle')?.value || '',
             description: document.getElementById('description')?.value || '',
-            technician: document.getElementById('technician')?.value || '',
-            hoursSpent: parseFloat(document.getElementById('hoursSpent')?.value) || 0,
-            cost: document.getElementById('cost')?.value ? 
-                  parseFloat(document.getElementById('cost')?.value) : null,
-            partsUsed: document.getElementById('partsUsed')?.value || '',
-            nextMaintenanceDate: document.getElementById('nextMaintenance')?.value || '',
-            status: statusRadio?.value || 'completed',
-            priority: priorityRadio?.value || 'medium',
-            loggedBy: this.userProfile?.id || 'technician',
-            timestamp: new Date().toISOString()
+            status: document.getElementById('status')?.value || 'completed',
+            priority: document.getElementById('priority')?.value || 'medium',
+            laborHours: parseFloat(document.getElementById('laborHours')?.value) || 0,
+            completedDate: document.getElementById('maintenanceDate')?.value || new Date().toISOString(),
+            totalCost: document.getElementById('totalCost')?.value ? 
+                      parseFloat(document.getElementById('totalCost')?.value) : undefined,
+            generatorHours: document.getElementById('generatorHours')?.value ? 
+                           parseFloat(document.getElementById('generatorHours')?.value) : undefined,
+            nextMaintenanceDate: document.getElementById('nextMaintenanceDate')?.value || undefined,
+            partsUsed: this.getPartsUsed(),
+            notes: document.getElementById('notes')?.value || undefined
         };
     }
 
-    validateForm() {
-        const formData = this.getFormData();
-        const errors = [];
-        
-        if (!formData.type) errors.push('Please select maintenance type');
-        if (!formData.description) errors.push('Please enter description');
-        if (!formData.technician) errors.push('Please enter technician name');
-        if (!formData.hoursSpent || formData.hoursSpent <= 0) {
-            errors.push('Please enter valid hours spent');
-        }
-
-        return errors;
+    validateForm(formData) {
+        // Use centralized validators
+        const validation = validators.validateMaintenanceLog(formData);
+        return validation;
     }
 
     async handleSubmit() {
-        const errors = this.validateForm();
-        if (errors.length > 0) {
-            this.showErrors(errors);
+        const formData = this.getFormData();
+        const validation = this.validateForm(formData);
+        
+        if (!validation.valid) {
+            this.showErrors(validation.errors);
             return;
         }
 
-        const formData = this.getFormData();
         this.modal.setLoading(true, 'Logging maintenance...');
         
         try {
-            await this.onSubmit(formData);
+            const payload = validation.data;
+            console.log('📤 Submitting maintenance log:', payload);
+            
+            const result = await siteService.addMaintenanceLog(payload);
+            
+            showAlert('✅ Maintenance logged successfully!', 'success');
+            console.log('✅ Response:', result);
+            
+            if (this.onSuccess) {
+                await this.onSuccess(result);
+            }
+            
             this.modal.close();
+            
         } catch (error) {
-            console.error('Maintenance log error:', error);
-            this.showErrors([error.message || 'Failed to log maintenance']);
+            console.error('❌ Maintenance log error:', error);
+            const errorMsg = error.response?.data?.message || error.message || 'Failed to log maintenance';
+            this.showErrors([errorMsg]);
         } finally {
             this.modal.setLoading(false);
         }

@@ -1,2 +1,5 @@
 # Ignore firebase config file
 public/src/services/firebaseConfig.js
+
+# Ignore Requirements and todo lists
+*.md

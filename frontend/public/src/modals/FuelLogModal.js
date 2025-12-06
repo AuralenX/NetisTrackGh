@@ -1,6 +1,7 @@
 import { Modal } from '../../components/modal.js';
 import { showAlert } from '../utils/helpers.js';
 import { siteService } from '../services/siteService.js';
+import { validators } from '../utils/validators.js';
 
 class FuelLogModal {
     constructor(siteId, siteName, userProfile, onSuccess) {
@@ -9,6 +10,7 @@ class FuelLogModal {
         this.userProfile = userProfile;
         this.onSuccess = onSuccess;
         this.modal = null;
+        this.technicianId = userProfile?.id || userProfile?.userId || 'unknown';
     }
 
     open() {
@@ -39,9 +41,9 @@ class FuelLogModal {
                                 <strong>${this.siteName}</strong> (ID: ${this.siteId})
                             </div>
                         </div>
-                        <div>
+                        <div style="flex: 1;">
                             <label class="modal-form-label" for="fuelDate">
-                                <i class="far fa-calendar"></i> Date & Time
+                                <i class="far fa-calendar"></i> Refuel Date & Time
                             </label>
                             <input type="datetime-local" 
                                    id="fuelDate" 
@@ -54,65 +56,86 @@ class FuelLogModal {
 
                 <div class="modal-form-group">
                     <label class="modal-form-label" for="fuelAmount">
-                        <i class="fas fa-oil-can"></i> Fuel Amount (Liters)
+                        <i class="fas fa-oil-can"></i> Fuel Amount (Liters) *
                     </label>
                     <input type="number" 
                            id="fuelAmount" 
                            class="modal-form-input" 
-                           min="1" 
+                           min="0.1" 
                            max="10000" 
                            step="0.1"
-                           placeholder="Enter amount in liters"
+                           placeholder="e.g., 50.5"
                            required>
                     <div class="modal-form-helper">
                         Typical diesel generator consumption: 3-5 L/hour
                     </div>
                 </div>
 
-                <div class="modal-form-group">
-                    <label class="modal-form-label" for="fuelType">
-                        <i class="fas fa-gas-pump"></i> Fuel Type
-                    </label>
-                    <select id="fuelType" class="modal-form-select" required>
-                        <option value="">Select fuel type</option>
-                        <option value="diesel" selected>Diesel</option>
-                        <option value="petrol">Petrol/Gasoline</option>
-                        <option value="hybrid">Hybrid (Solar + Generator)</option>
-                    </select>
+                <div class="modal-form-row">
+                    <div class="modal-form-group">
+                        <label class="modal-form-label" for="currentLevel">
+                            <i class="fas fa-percentage"></i> Current Fuel Level (%) *
+                        </label>
+                        <input type="number" 
+                               id="currentLevel" 
+                               class="modal-form-input" 
+                               min="0" 
+                               max="100" 
+                               step="1"
+                               placeholder="0-100"
+                               required>
+                    </div>
+
+                    <div class="modal-form-group">
+                        <label class="modal-form-label" for="previousLevel">
+                            <i class="fas fa-history"></i> Previous Level (%)
+                        </label>
+                        <input type="number" 
+                               id="previousLevel" 
+                               class="modal-form-input" 
+                               min="0" 
+                               max="100" 
+                               step="1"
+                               placeholder="0-100">
+                    </div>
+                </div>
+
+                <div class="modal-form-row">
+                    <div class="modal-form-group">
+                        <label class="modal-form-label" for="fuelCost">
+                            <i class="fas fa-money-bill-wave"></i> Fuel Cost (GHS)
+                        </label>
+                        <input type="number" 
+                               id="fuelCost" 
+                               class="modal-form-input" 
+                               min="0"
+                               step="0.01"
+                               placeholder="e.g., 250.50">
+                    </div>
+
+                    <div class="modal-form-group">
+                        <label class="modal-form-label" for="generatorHours">
+                            <i class="fas fa-tachometer-alt"></i> Generator Hours
+                        </label>
+                        <input type="number" 
+                               id="generatorHours" 
+                               class="modal-form-input" 
+                               min="0"
+                               step="0.1"
+                               placeholder="Total run hours">
+                    </div>
                 </div>
 
                 <div class="modal-form-group">
-                    <label class="modal-form-label" for="fuelSupplier">
-                        <i class="fas fa-truck"></i> Fuel Supplier
-                    </label>
-                    <input type="text" 
-                           id="fuelSupplier" 
-                           class="modal-form-input" 
-                           placeholder="Enter supplier name">
-                </div>
-
-                <div class="modal-form-group">
-                    <label class="modal-form-label" for="meterReading">
-                        <i class="fas fa-tachometer-alt"></i> Generator Meter Reading (Hours)
+                    <label class="modal-form-label" for="odometerReading">
+                        <i class="fas fa-map"></i> Odometer Reading (km)
                     </label>
                     <input type="number" 
-                           id="meterReading" 
+                           id="odometerReading" 
                            class="modal-form-input" 
                            min="0"
-                           step="0.1"
-                           placeholder="Current generator hours">
-                </div>
-
-                <div class="modal-form-group">
-                    <label class="modal-form-label" for="cost">
-                        <i class="fas fa-money-bill-wave"></i> Cost (GHS)
-                    </label>
-                    <input type="number" 
-                           id="cost" 
-                           class="modal-form-input" 
-                           min="0"
-                           step="0.01"
-                           placeholder="Enter cost in Ghana Cedis">
+                           step="1"
+                           placeholder="Vehicle odometer if applicable">
                 </div>
 
                 <div class="modal-form-group">
@@ -121,8 +144,9 @@ class FuelLogModal {
                     </label>
                     <textarea id="notes" 
                               class="modal-form-textarea" 
-                              placeholder="Add any additional notes about this refill..."
-                              rows="3"></textarea>
+                              placeholder="Add any additional notes (max 500 chars)..."
+                              rows="3"
+                              maxlength="500"></textarea>
                 </div>
 
                 <div class="form-errors" id="fuelFormErrors" style="color: #e53e3e; font-size: 14px; margin-top: 10px; display: none;"></div>
@@ -133,63 +157,55 @@ class FuelLogModal {
     getFormData() {
         return {
             siteId: this.siteId,
-            fuelDate: document.getElementById('fuelDate')?.value || '',
-            fuelAmount: parseFloat(document.getElementById('fuelAmount')?.value) || 0,
-            fuelType: document.getElementById('fuelType')?.value || '',
-            fuelSupplier: document.getElementById('fuelSupplier')?.value || '',
-            meterReading: document.getElementById('meterReading')?.value ? 
-                         parseFloat(document.getElementById('meterReading')?.value) : null,
-            cost: document.getElementById('cost')?.value ? 
-                  parseFloat(document.getElementById('cost')?.value) : null,
-            notes: document.getElementById('notes')?.value || '',
-            loggedBy: this.userProfile?.id || 'technician',
-            timestamp: new Date().toISOString()
+            technicianId: this.technicianId,
+            fuelAmount: parseFloat(document.getElementById('fuelAmount')?.value || 0),
+            currentLevel: parseFloat(document.getElementById('currentLevel')?.value || 0),
+            refuelDate: document.getElementById('fuelDate')?.value || new Date().toISOString(),
+            previousLevel: parseFloat(document.getElementById('previousLevel')?.value) || undefined,
+            fuelCost: parseFloat(document.getElementById('fuelCost')?.value) || undefined,
+            generatorHours: parseFloat(document.getElementById('generatorHours')?.value) || undefined,
+            odometerReading: parseFloat(document.getElementById('odometerReading')?.value) || undefined,
+            notes: document.getElementById('notes')?.value || ''
         };
     }
 
     validateForm(formData) {
-        const errors = [];
-        
-        if (!formData.fuelAmount || formData.fuelAmount <= 0) {
-            errors.push('Please enter a valid fuel amount');
-        }
-        if (!formData.fuelType) {
-            errors.push('Please select fuel type');
-        }
-        if (!formData.fuelDate) {
-            errors.push('Please select date and time');
-        }
-
-        return errors;
+        const validation = validators.validateFuelLog(formData);
+        return validation;
     }
 
     async handleSubmit() {
         const formData = this.getFormData();
-        const errors = this.validateForm(formData);
+        const validation = this.validateForm(formData);
         
-        if (errors.length > 0) {
-            this.showErrors(errors);
+        if (!validation.valid) {
+            this.showErrors(validation.errors);
             return;
         }
 
         this.modal.setLoading(true, 'Logging fuel...');
         
         try {
-            // Use siteService instead of direct fetch
-            await siteService.addFuelLog(formData);
+            // Submit clean data to backend via siteService
+            const payload = validation.data;
+            console.log('📤 Submitting fuel log:', payload);
+            
+            const result = await siteService.addFuelLog(payload);
             
             showAlert('✅ Fuel logged successfully!', 'success');
+            console.log('✅ Response:', result);
             
             // Call success callback
             if (this.onSuccess) {
-                await this.onSuccess(formData);
+                await this.onSuccess(result);
             }
             
             this.modal.close();
             
         } catch (error) {
-            console.error('Fuel log error:', error);
-            this.showErrors([error.message || 'Failed to log fuel']);
+            console.error('❌ Fuel log error:', error);
+            const errorMsg = error.response?.data?.message || error.message || 'Failed to log fuel';
+            this.showErrors([errorMsg]);
         } finally {
             this.modal.setLoading(false);
         }

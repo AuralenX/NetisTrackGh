@@ -4,6 +4,7 @@ import { authService } from '../services/authService.js';
 import { siteService } from '../services/siteService.js';
 import { SiteCard } from '../../components/site-card.js';
 import { AddSiteModal } from '../modals/index.js';
+import { Layout } from '../components/Layout.js';
 
 export default class SitesPage {
     constructor() {
@@ -19,6 +20,7 @@ export default class SitesPage {
         this.currentPage = 1;
         this.itemsPerPage = 12;
         this.eventHandlers = {};
+        this.layout = new Layout({ currentPage: 'sites' });
     }
 
     async init() {
@@ -59,8 +61,8 @@ export default class SitesPage {
         const endIndex = startIndex + this.itemsPerPage;
         const currentSites = this.filteredSites.slice(startIndex, endIndex);
         
-        return `
-            <div class="sites-page" id="pages-styles">
+        const pageContent = `
+            <div class="sites-page-content">
                 <!-- Page Header -->
                 <div class="page-header">
                     <div class="header-content">
@@ -201,6 +203,8 @@ export default class SitesPage {
                 ${this.sites.length === 0 ? this.renderEmptyState() : ''}
             </div>
         `;
+
+        return this.layout.render(pageContent);
     }
 
     renderSitesGrid(sites) {
@@ -310,6 +314,8 @@ export default class SitesPage {
     }
 
     attachEvents() {
+        this.layout.attachEvents();
+        
         console.log('🔗 Attaching SitesPage events...');
         
         // Remove existing listeners
@@ -571,6 +577,7 @@ export default class SitesPage {
     }
 
     destroy() {
+        this.layout.destroy();
         console.log('🧹 Cleaning up SitesPage...');
         this.removeEventListeners();
         this.siteComponents = [];

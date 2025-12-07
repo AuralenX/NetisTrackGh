@@ -279,8 +279,8 @@ export class TechnicianDashboard {
     }
 
     render() {
-        const userName = this.userProfile?.firstName || 'Technician';
-        const userRole = this.userProfile?.role || 'technician';
+        const userName = this.userProfile.firstName || 'User';
+        const userRole = this.userProfile.role;
         const userInitial = userName.charAt(0).toUpperCase();
         
         // Calculate unread alerts
@@ -528,6 +528,7 @@ export class TechnicianDashboard {
                             </div>
                         </section>
 
+
                         <!-- Assigned Sites -->
                         <section class="dashboard-section">
                             <div class="section-header">
@@ -545,6 +546,7 @@ export class TechnicianDashboard {
                                 ${this.renderSitesGrid()}
                             </div>
                         </section>
+                        
 
                         <!-- Recent Activities -->
                         <section class="dashboard-section">
@@ -808,33 +810,42 @@ export class TechnicianDashboard {
             sidebarOverlay.addEventListener('click', this.eventHandlers.sidebarOverlay);
         }
         
-        // Settings dropdown - FIXED: Only attach to userInfo
+        // Settings dropdown - FIXED: Only attach to userInfo       
         const userInfo = document.getElementById('userInfo');
-        
+        const settingsDropdown = document.getElementById('settingsDropdown');
+        settingsDropdown.classList.remove('show')
+        // if (userInfo) {
+        //     this.eventHandlers.userInfo = () => this.toggleSettingsDropdown();
+        //     userInfo.addEventListener('click', this.eventHandlers.userInfo);
+        // }
         if (userInfo) {
             this.eventHandlers.userInfo = (e) => {
-                console.log('👤 User info clicked, :');
+                // Prevent the global click handler from immediately closing the dropdown
                 e.stopPropagation();
-                this.toggleSettingsDropdown(e);
+                this._suppressCloseUntil = Date.now() + 250;
+                this.toggleSettingsDropdown();
             };
             userInfo.addEventListener('click', this.eventHandlers.userInfo);
         }
         
         // Close dropdown when clicking outside
         this.eventHandlers.closeDropdownOnClick = (e) => {
+            // If we recently opened the dropdown, ignore stray clicks for a short window
+            if (Date.now() < (this._suppressCloseUntil || 0)) return;
+
             const userInfo = document.getElementById('userInfo');
             const dropdown = document.getElementById('settingsDropdown');
-            
-            if (dropdown.classList.contains('show')) {
-                if (!userInfo?.contains(e.target)) {
-                    console.log('👆 Clicked outside, closing dropdown');
+
+            if (dropdown && dropdown.classList.contains('show')) {
+                // If click target is not inside the dropdown or userInfo, close it
+                if (!dropdown.contains(e.target) && !userInfo?.contains(e.target)) {
                     this.closeSettingsDropdown();
                 }
             }
         };
         document.addEventListener('click', this.eventHandlers.closeDropdownOnClick);
         
-        // Close on escape key
+        // // Close on escape key
         this.eventHandlers.closeOnEscape = (e) => {
             if (e.key === 'Escape') {
                 this.closeSettingsDropdown();
@@ -910,28 +921,16 @@ export class TechnicianDashboard {
         console.log('✅ Dashboard events attached successfully');
     }
 
-    toggleSettingsDropdown(e) {
-        console.log('🔄 Toggling settings dropdown');
-        
-        // if (e) {
-        //     e.stopPropagation();
-        // }
-        
-        const settingsDropdown = document.getElementById('settingsDropdown');
-        
-        if (settingsDropdown && settingsDropdown.classList.contains('show')) {
-            this.closeSettingsDropdown();
-        } else {
-            this.openSettingsDropdown();
-        }
+    toggleSettingsDropdown() {
+        this.isSettingsOpen
+            ? this.closeSettingsDropdown()
+            : this.openSettingsDropdown();
     }
 
     openSettingsDropdown() {
-        console.log('📖 Opening settings dropdown');
-        
         const settingsDropdown = document.getElementById('settingsDropdown');
         const settingsOverlay = document.getElementById('settingsOverlay');
-        
+
         if (settingsDropdown) {
             settingsDropdown.classList.add('show');
             settingsDropdown.style.display = 'block';
@@ -939,32 +938,32 @@ export class TechnicianDashboard {
             settingsDropdown.style.visibility = 'visible';
             settingsDropdown.style.zIndex = '1000';
         }
-        
+
         if (settingsOverlay) {
             settingsOverlay.classList.add('active');
             settingsOverlay.style.display = 'block';
         }
-        
+
         this.isSettingsOpen = true;
+        console.log('Settings dropdown opened');
     }
 
     closeSettingsDropdown() {
-        console.log('📕 Closing settings dropdown');
-        
         const settingsDropdown = document.getElementById('settingsDropdown');
         const settingsOverlay = document.getElementById('settingsOverlay');
-        
-        if (settingsDropdown) {
+
+        if (settingsDropdown && settingsDropdown.classList.contains('show')) {
             settingsDropdown.classList.remove('show');
             settingsDropdown.style.display = 'none';
         }
-        
-        if (settingsOverlay) {
+
+        if (settingsDropdown && settingsOverlay.classList.contains('active')) {
             settingsOverlay.classList.remove('active');
             settingsOverlay.style.display = 'none';
         }
-        
+
         this.isSettingsOpen = false;
+        console.log('Settings dropdown closed');
     }
 
     async handleLogout() {
@@ -1479,7 +1478,6 @@ export class TechnicianDashboard {
         this.cleanupComponents();
         this.closeSidebar();
         this.closeSettingsDropdown();
-        
         this.isInitialized = false;
         console.log('✅ Dashboard destroyed');
     }

@@ -194,31 +194,42 @@ class NetisTrackApp {
 
             // Use existing page instance if available
             let pageInstance = this.pageInstances.get(hash);
-            
+
+            // Clear current page if it's different from new route
+            if (this.currentPage && this.currentPage !== pageInstance &&
+                typeof this.currentPage.destroy === 'function') {
+                try {
+                    console.log('🧹 Destroying previous page:', this.currentPage.constructor.name);
+                    this.currentPage.destroy();
+                } catch (err) {
+                    console.warn('Error during previous page destroy:', err);
+                }
+            }
+
             if (pageInstance) {
                 console.log('♻️ Reusing existing page instance for:', hash);
+                // Detach any old event listeners on the instance (if provided)
+                try {
+                    if (typeof pageInstance.detachEvents === 'function') pageInstance.detachEvents();
+                } catch (err) {
+                    console.warn('Error detaching events from reused page instance:', err);
+                }
+
+                // Ensure page is initialized (some pages expose async init)
+                if (typeof pageInstance.init === 'function') {
+                    try { await pageInstance.init(); } catch (err) { console.warn('Page init error on reuse:', err); }
+                }
+
                 this.currentPage = pageInstance;
-                
+
                 // Render the existing instance
                 mainContent.innerHTML = pageInstance.render();
                 setTimeout(() => {
                     if (typeof pageInstance.attachEvents === 'function') {
-                        // Detach old events first
-                        if (typeof pageInstance.detachEvents === 'function') {
-                            pageInstance.detachEvents();
-                        }
-                        pageInstance.attachEvents();
+                        try { pageInstance.attachEvents(); } catch (err) { console.warn('Attach events error:', err); }
                     }
                 }, 50);
                 return;
-            }
-
-            // Clear current page if it's different from new route
-            if (this.currentPage && 
-                this.currentPage.constructor.name.toLowerCase() !== hash.replace('-', '') &&
-                typeof this.currentPage.destroy === 'function') {
-                console.log('🧹 Destroying previous page:', this.currentPage.constructor.name);
-                this.currentPage.destroy();
             }
 
             // Load the appropriate page based on route
@@ -346,22 +357,31 @@ class NetisTrackApp {
             // Create new page instance
             console.log('🏗️ Creating new page instance for:', route);
             const pageInstance = new PageClass();
-            
+
             // Store the instance for reuse
             this.pageInstances.set(route, pageInstance);
             this.currentPage = pageInstance;
+
+            // Allow page to initialize (load data) before rendering if it exposes init()
+            if (typeof pageInstance.init === 'function') {
+                try {
+                    await pageInstance.init();
+                } catch (err) {
+                    console.warn('Error during page init():', err);
+                }
+            }
 
             // Render the page
             if (pageInstance && typeof pageInstance.render === 'function') {
                 console.log('🎨 Rendering page:', route);
                 container.innerHTML = pageInstance.render();
-                
+
                 // Attach event listeners if the method exists
                 if (typeof pageInstance.attachEvents === 'function') {
                     console.log('🔗 Attaching events for:', route);
                     // Small timeout to ensure DOM is ready
                     setTimeout(() => {
-                        pageInstance.attachEvents();
+                        try { pageInstance.attachEvents(); } catch (err) { console.warn('Attach events error:', err); }
                     }, 50);
                 }
             }
@@ -469,7 +489,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('loading-screen').style.display = 'none';
             document.getElementById('main-content').style.display = 'block';
         }, 500);
-    }, 5000); // 
+    }, 3600); // 
 });
 
 // Make app available globally for navigation

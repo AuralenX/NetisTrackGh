@@ -2,6 +2,7 @@
 import { showAlert, formatDate, formatTime, formatCurrency } from '../utils/helpers.js';
 import { siteService } from '../services/siteService.js';
 import MaintenanceLogModal from '../modals/MaintenanceLogModal.js';
+import { Layout } from '../components/Layout.js';
 
 class MaintenancePage {
     constructor(userProfile) {
@@ -18,6 +19,7 @@ class MaintenancePage {
             maintenanceType: 'all',
             status: 'all'
         };
+        this.layout = new Layout({ currentPage: 'maintenance' });
     }
 
     async init() {
@@ -109,7 +111,7 @@ class MaintenancePage {
             <option value="${s.siteId}">${s.name} (${s.siteId})</option>
         `).join('');
 
-        return `
+        const pageContent = `
             <div class="maintenance-logs-page">
                 <!-- Page Header -->
                 <div class="page-header">
@@ -210,6 +212,8 @@ class MaintenancePage {
                 </div>
             </div>
         `;
+
+        return this.layout.render(pageContent);
     }
 
     renderMaintenanceLogsTable(logs) {
@@ -351,6 +355,8 @@ class MaintenancePage {
     }
 
     attachEvents() {
+        this.layout.attachEvents();
+        
         // Add Maintenance Log Button
         const addMaintenanceLogBtn = document.getElementById('addMaintenanceLogBtn');
         if (addMaintenanceLogBtn) {
@@ -564,6 +570,7 @@ class MaintenancePage {
     }
 
     destroy() {
+        this.layout.destroy();
         console.log('🧹 Cleaning up MaintenancePage...');
     }
 }

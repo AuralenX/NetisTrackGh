@@ -1,10 +1,14 @@
 // frontend/src/pages/AboutPage.js
+import { Layout } from '../components/Layout.js';
+
 class AboutPage {
-    constructor() {}
+    constructor() {
+        this.layout = new Layout({ currentPage: 'about' });
+    }
     async init() { return this; }
 
     render() {
-        return `
+        const pageContent = `
             <div class="about-page">
                 <div class="page-header">
                     <h1><i class="fas fa-info-circle"></i> About NetisTrackGh</h1>
@@ -22,9 +26,13 @@ class AboutPage {
                 </div>
             </div>
         `;
+
+        return this.layout.render(pageContent);
     }
 
-    attachEvents() {}
+    attachEvents() {
+        this.layout.attachEvents();
+    }
 }
 
 export default AboutPage;

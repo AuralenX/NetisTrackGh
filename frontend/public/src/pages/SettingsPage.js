@@ -1,5 +1,6 @@
 // frontend/src/pages/SettingsPage.js
 import { showAlert } from '../utils/helpers.js';
+import { Layout } from '../components/Layout.js';
 
 class SettingsPage {
     constructor() {
@@ -8,12 +9,13 @@ class SettingsPage {
             darkMode: false,
             autoSync: true
         };
+        this.layout = new Layout({ currentPage: 'settings' });
     }
 
     async init() { return this; }
 
     render() {
-        return `
+        const pageContent = `
             <div class="settings-page">
                 <div class="page-header">
                     <h1><i class="fas fa-cog"></i> Settings</h1>
@@ -35,9 +37,13 @@ class SettingsPage {
                 </div>
             </div>
         `;
+
+        return this.layout.render(pageContent);
     }
 
     attachEvents() {
+        this.layout.attachEvents();
+        
         const save = document.getElementById('saveSettingsBtn');
         if (save) save.addEventListener('click', () => this.saveSettings());
     }

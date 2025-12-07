@@ -1,17 +1,19 @@
 // frontend/src/pages/ProfilePage.js
 import { showAlert, formatDate } from '../utils/helpers.js';
 import { authService } from '../services/authService.js';
+import { Layout } from '../components/Layout.js';
 
 class ProfilePage {
     constructor() {
         this.profile = authService.getUserProfile();
+        this.layout = new Layout({ currentPage: 'profile' });
     }
 
     async init() { return this; }
 
     render() {
         const p = this.profile || {};
-        return `
+        const pageContent = `
             <div class="profile-page">
                 <div class="page-header">
                     <h1><i class="fas fa-user"></i> Profile</h1>
@@ -29,9 +31,13 @@ class ProfilePage {
                 </div>
             </div>
         `;
+
+        return this.layout.render(pageContent);
     }
 
     attachEvents() {
+        this.layout.attachEvents();
+        
         const edit = document.getElementById('editProfileBtn');
         if (edit) edit.addEventListener('click', () => showAlert('Edit profile coming soon', 'info'));
         const pw = document.getElementById('changePasswordBtn');

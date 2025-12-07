@@ -2,6 +2,7 @@
 import { showAlert, formatDate, formatTime, formatCurrency } from '../utils/helpers.js';
 import { siteService } from '../services/siteService.js';
 import FuelLogModal from '../modals/FuelLogModal.js';
+import { Layout } from '../components/Layout.js';
 
 class FuelLogsPage {
     constructor(userProfile) {
@@ -17,6 +18,7 @@ class FuelLogsPage {
             endDate: '',
             fuelType: 'all'
         };
+        this.layout = new Layout({ currentPage: 'fuel' });
     }
 
     async init() {
@@ -81,7 +83,7 @@ class FuelLogsPage {
 
         const siteOptions = this.sites.map(s => `<option value="${s.siteId}">${s.name} (${s.siteId})</option>`).join('');
 
-        return `
+        const pageContent = `
             <div class="fuel-logs-page">
                 <div class="page-header">
                     <div class="header-content">
@@ -137,6 +139,8 @@ class FuelLogsPage {
                 </div>
             </div>
         `;
+
+        return this.layout.render(pageContent);
     }
 
     renderFuelLogsTable(logs) {
@@ -214,6 +218,8 @@ class FuelLogsPage {
     }
 
     attachEvents() {
+        this.layout.attachEvents();
+        
         const addFuelLogBtn = document.getElementById('addFuelLogBtn');
         if (addFuelLogBtn) addFuelLogBtn.addEventListener('click', () => this.showAddFuelLogForm());
 
@@ -327,7 +333,12 @@ class FuelLogsPage {
         if (container) { container.innerHTML = this.render(); this.attachEvents(); }
     }
 
-    destroy() { this.fuelLogs = []; this.sites = []; this.filteredLogs = []; }
+    destroy() {
+        this.layout.destroy();
+        this.fuelLogs = [];
+        this.sites = [];
+        this.filteredLogs = [];
+    }
 }
 
 export default FuelLogsPage;

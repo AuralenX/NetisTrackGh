@@ -1,11 +1,13 @@
 // frontend/src/pages/ReportsPage.js
 import { showAlert } from '../utils/helpers.js';
 import { siteService } from '../services/siteService.js';
+import { Layout } from '../components/Layout.js';
 
 class ReportsPage {
     constructor() {
         this.reports = [];
         this.sites = [];
+        this.layout = new Layout({ currentPage: 'reports' });
     }
 
     async init() {
@@ -19,7 +21,7 @@ class ReportsPage {
     }
 
     render() {
-        return `
+        const pageContent = `
             <div class="reports-page">
                 <div class="page-header">
                     <h1><i class="fas fa-file-alt"></i> Reports</h1>
@@ -40,9 +42,13 @@ class ReportsPage {
                 </div>
             </div>
         `;
+
+        return this.layout.render(pageContent);
     }
 
     attachEvents() {
+        this.layout.attachEvents();
+        
         const gen = document.getElementById('generateReportBtn');
         if (gen) gen.addEventListener('click', () => this.generateReport());
         const exp = document.getElementById('exportReportBtn');

@@ -70,16 +70,36 @@ export const siteService = {
                 throw new Error(`Failed to fetch sites: ${response.status}`);
             }
             
-            const sites = await response.json();
-            
-            // Cache the results
+            const raw = await response.json();
+
+            // Normalize response to always return an array of sites
+            let sites = [];
+            if (Array.isArray(raw)) {
+                sites = raw;
+            } else if (raw && Array.isArray(raw.data)) {
+                sites = raw.data;
+            } else if (raw && Array.isArray(raw.sites)) {
+                sites = raw.sites;
+            } else if (raw && Array.isArray(raw.docs)) {
+                sites = raw.docs;
+            } else if (raw && Array.isArray(raw.items)) {
+                sites = raw.items;
+            } else if (raw && Array.isArray(raw.results)) {
+                sites = raw.results;
+            } else if (raw && typeof raw === 'object') {
+                // Try to find the first array property
+                const firstArrayProp = Object.values(raw).find(v => Array.isArray(v));
+                if (firstArrayProp) sites = firstArrayProp;
+            }
+
+            // Cache the normalized results
             this.cacheData(cacheKey, sites);
-            
+
             // Update offline storage
             await this.updateOfflineSites(sites);
-            
+
             console.log(`✅ Retrieved ${sites.length} sites`);
-            
+
             return sites;
             
         } catch (error) {

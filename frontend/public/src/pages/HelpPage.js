@@ -1,12 +1,15 @@
 // frontend/src/pages/HelpPage.js
 import { showAlert } from '../utils/helpers.js';
+import { Layout } from '../components/Layout.js';
 
 class HelpPage {
-    constructor() {}
+    constructor() {
+        this.layout = new Layout({ currentPage: 'help' });
+    }
     async init() { return this; }
 
     render() {
-        return `
+        const pageContent = `
             <div class="help-page">
                 <div class="page-header">
                     <h1><i class="fas fa-question-circle"></i> Help & Support</h1>
@@ -28,9 +31,13 @@ class HelpPage {
                 </section>
             </div>
         `;
+
+        return this.layout.render(pageContent);
     }
 
     attachEvents() {
+        this.layout.attachEvents();
+        
         const btn = document.getElementById('contactSupportBtn');
         if (btn) btn.addEventListener('click', () => showAlert('Opening support email...', 'info'));
     }

@@ -1,0 +1,34 @@
+[build]
+  command = "npm install"
+  publish = "public"
+  functions = "functions"
+
+[dev]
+  command = "npm run dev"
+  port = 8888
+  publish = "public"
+
+# Redirect all routes through our function
+[[redirects]]
+  from = "/*"
+  to = "/.netlify/functions/server"
+  status = 200
+
+# Except for static assets
+[[redirects]]
+  from = "/assets/*"
+  to = "/assets/:splat"
+  status = 200
+
+# Environment variables for Netlify
+[context.production.environment]
+  NODE_ENV = "production"
+  NETLIFY = "true"
+
+[context.deploy-preview.environment]
+  NODE_ENV = "development"
+  NETLIFY = "true"
+
+[context.branch-deploy.environment]
+  NODE_ENV = "development"
+  NETLIFY = "true"

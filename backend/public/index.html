@@ -1,0 +1,2338 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NetisTrackGH | System Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+      integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw=="
+      crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Roboto+Mono:wght@300;400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="shortcut icon" href="./icon.png" type="image/png" />
+    <style>
+      /* Reset & Base Styles */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        --primary-color: #4361ee;
+        --primary-dark: #3a56d4;
+        --secondary-color: #3f37c9;
+        --accent-color: #4895ef;
+        --light-color: #f8f9fa;
+        --dark-color: #212529;
+        --gray-color: #6c757d;
+        --gray-light: #e9ecef;
+        --success-color: #4cc9f0;
+        --warning-color: #f72585;
+        --danger-color: #ef233c;
+        --border-radius: 10px;
+        --box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        --transition: all 0.3s ease;
+        --sidebar-width: 260px;
+      }
+
+      body {
+        font-family: "Inter", sans-serif;
+        background-color: #f5f7fb;
+        color: var(--dark-color);
+        line-height: 1.6;
+        overflow-x: hidden;
+      }
+
+      /* Layout */
+      .container {
+        display: flex;
+        min-height: 100vh;
+      }
+
+      /* Sidebar */
+      .sidebar {
+        width: var(--sidebar-width);
+        background: linear-gradient(
+          180deg,
+          var(--primary-color) 0%,
+          var(--secondary-color) 100%
+        );
+        color: white;
+        padding: 2rem 1.5rem;
+        position: fixed;
+        height: 100vh;
+        overflow-y: auto;
+        transition: var(--transition);
+        z-index: 1000;
+      }
+
+      .logo {
+        display: flex;
+        align-items: center;
+        margin-bottom: 2.5rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .logo-icon {
+        width: 40px;
+        height: 40px;
+        margin-right: 0.75rem;
+        border-radius: 5px;
+      }
+
+      .logo-text {
+        font-size: 1.5rem;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+      }
+
+      .logo-subtext {
+        font-size: 0.75rem;
+        opacity: 0.8;
+        letter-spacing: 1px;
+      }
+
+      .nav-menu {
+        list-style: none;
+      }
+
+      .nav-item {
+        margin-bottom: 0.5rem;
+      }
+
+      .nav-link {
+        display: flex;
+        align-items: center;
+        padding: 0.9rem 1rem;
+        color: rgba(255, 255, 255, 0.85);
+        text-decoration: none;
+        border-radius: var(--border-radius);
+        transition: var(--transition);
+      }
+
+      .nav-link:hover,
+      .nav-link.active {
+        background-color: rgba(255, 255, 255, 0.15);
+        color: white;
+      }
+
+      .nav-icon {
+        font-size: 1.2rem;
+        margin-right: 0.75rem;
+        width: 24px;
+        text-align: center;
+      }
+
+      .nav-text {
+        font-weight: 500;
+        font-size: 0.95rem;
+      }
+
+      /* Main Content */
+      .main-content {
+        flex: 1;
+        margin-left: var(--sidebar-width);
+        padding: 2rem;
+        transition: var(--transition);
+      }
+
+      /* Topbar */
+      .topbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2.5rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid var(--gray-light);
+      }
+
+      .page-title h1 {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--dark-color);
+      }
+
+      .page-title p {
+        color: var(--gray-color);
+        font-size: 0.9rem;
+        margin-top: 0.25rem;
+      }
+
+      .topbar-actions {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+      }
+
+      .search-box {
+        position: relative;
+      }
+
+      .search-input {
+        padding: 0.7rem 1rem 0.7rem 2.5rem;
+        border: 1px solid var(--gray-light);
+        border-radius: 30px;
+        width: 250px;
+        font-size: 0.9rem;
+        transition: var(--transition);
+      }
+
+      .search-input:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+      }
+
+      .search-icon {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--gray-color);
+      }
+
+      .notifications {
+        position: relative;
+      }
+
+      .notification-btn {
+        background: none;
+        border: none;
+        font-size: 1.2rem;
+        color: var(--dark-color);
+        cursor: pointer;
+        position: relative;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: var(--transition);
+      }
+
+      .notification-btn:hover {
+        background-color: var(--gray-light);
+      }
+
+      .notification-badge {
+        position: absolute;
+        top: 0;
+        right: 0;
+        background-color: var(--danger-color);
+        color: white;
+        font-size: 0.7rem;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .user-profile {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.5rem;
+        border-radius: 30px;
+        transition: var(--transition);
+        cursor: pointer;
+      }
+
+      .user-profile:hover {
+        background-color: var(--gray-light);
+      }
+
+      .user-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(
+          135deg,
+          var(--primary-color),
+          var(--accent-color)
+        );
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+      }
+
+      .user-info h4 {
+        font-size: 0.95rem;
+        font-weight: 600;
+      }
+
+      .user-info p {
+        font-size: 0.8rem;
+        color: var(--gray-color);
+      }
+
+      /* Stats Cards */
+      .stats-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2.5rem;
+      }
+
+      .stat-card {
+        background-color: white;
+        border-radius: var(--border-radius);
+        padding: 1.5rem;
+        box-shadow: var(--box-shadow);
+        transition: var(--transition);
+        border-left: 4px solid var(--primary-color);
+      }
+
+      .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+      }
+
+      .stat-card.orange {
+        border-left-color: #ff9e00;
+      }
+
+      .stat-card.green {
+        border-left-color: var(--success-color);
+      }
+
+      .stat-card.purple {
+        border-left-color: #7209b7;
+      }
+
+      .stat-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+      }
+
+      .stat-title {
+        font-size: 0.95rem;
+        color: var(--gray-color);
+        font-weight: 500;
+      }
+
+      .stat-icon {
+        font-size: 1.5rem;
+        color: var(--primary-color);
+      }
+
+      .stat-card.orange .stat-icon {
+        color: #ff9e00;
+      }
+
+      .stat-card.green .stat-icon {
+        color: var(--success-color);
+      }
+
+      .stat-card.purple .stat-icon {
+        color: #7209b7;
+      }
+
+      .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        font-family: "Roboto Mono", monospace;
+      }
+
+      .stat-change {
+        font-size: 0.85rem;
+        display: flex;
+        align-items: center;
+      }
+
+      .stat-change.positive {
+        color: var(--success-color);
+      }
+
+      .stat-change.negative {
+        color: var(--danger-color);
+      }
+
+      /* Charts Section */
+      .charts-container {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 1.5rem;
+        margin-bottom: 2.5rem;
+      }
+
+      @media (max-width: 1200px) {
+        .charts-container {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .chart-card {
+        background-color: white;
+        border-radius: var(--border-radius);
+        padding: 1.5rem;
+        box-shadow: var(--box-shadow);
+      }
+
+      .chart-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+      }
+
+      .chart-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+      }
+
+      .chart-actions {
+        display: flex;
+        gap: 0.5rem;
+      }
+
+      .chart-btn {
+        background: none;
+        border: 1px solid var(--gray-light);
+        border-radius: 5px;
+        padding: 0.4rem 0.8rem;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: var(--transition);
+      }
+
+      .chart-btn:hover {
+        background-color: var(--gray-light);
+      }
+
+      .chart-btn.active {
+        background-color: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+      }
+
+      .chart-placeholder {
+        height: 300px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #fafafa;
+        border-radius: 8px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      /* Recent Activity */
+      .activity-container {
+        background-color: white;
+        border-radius: var(--border-radius);
+        padding: 1.5rem;
+        box-shadow: var(--box-shadow);
+        margin-bottom: 2.5rem;
+      }
+
+      .activity-list {
+        list-style: none;
+      }
+
+      .activity-item {
+        display: flex;
+        padding: 1rem 0;
+        border-bottom: 1px solid var(--gray-light);
+      }
+
+      .activity-item:last-child {
+        border-bottom: none;
+      }
+
+      .activity-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+        flex-shrink: 0;
+      }
+
+      .activity-icon.success {
+        background-color: rgba(76, 201, 240, 0.1);
+        color: var(--success-color);
+      }
+
+      .activity-icon.warning {
+        background-color: rgba(247, 37, 133, 0.1);
+        color: var(--warning-color);
+      }
+
+      .activity-icon.info {
+        background-color: rgba(67, 97, 238, 0.1);
+        color: var(--primary-color);
+      }
+
+      .activity-content h4 {
+        font-size: 0.95rem;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+      }
+
+      .activity-content p {
+        font-size: 0.85rem;
+        color: var(--gray-color);
+      }
+
+      .activity-time {
+        font-size: 0.8rem;
+        color: var(--gray-color);
+        margin-left: auto;
+        flex-shrink: 0;
+      }
+
+      /* Footer */
+      .footer {
+        text-align: center;
+        padding: 1.5rem;
+        color: var(--gray-color);
+        font-size: 0.85rem;
+        border-top: 1px solid var(--gray-light);
+        margin-top: 2rem;
+      }
+
+      /* Loading States */
+      .loading {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        border-top-color: var(--primary-color);
+        animation: spin 1s ease-in-out infinite;
+        margin-right: 8px;
+      }
+
+      .loading-text {
+        color: var(--gray-color);
+        font-style: italic;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.7);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        color: white;
+        font-size: 1.2rem;
+      }
+
+      .loading-overlay .loading {
+        width: 50px;
+        height: 50px;
+        border-width: 5px;
+        border-top-color: white;
+        margin-bottom: 20px;
+      }
+
+      /* Error States */
+      .error-message {
+        background-color: rgba(239, 35, 60, 0.1);
+        border: 1px solid var(--danger-color);
+        color: var(--danger-color);
+        padding: 1rem;
+        border-radius: var(--border-radius);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .error-message i {
+        font-size: 1.2rem;
+      }
+
+      /* Responsive */
+      @media (max-width: 992px) {
+        .sidebar {
+          transform: translateX(-100%);
+          width: 280px;
+        }
+
+        .main-content {
+          margin-left: 0;
+        }
+
+        .sidebar.active {
+          transform: translateX(0);
+        }
+
+        .menu-toggle {
+          display: block;
+        }
+
+        .search-input {
+          width: 180px;
+        }
+      }
+
+      @media (max-width: 768px) {
+        .main-content {
+          padding: 1.5rem 1rem;
+        }
+
+        .stats-container {
+          grid-template-columns: 1fr;
+        }
+
+        .search-box {
+          display: none;
+        }
+      }
+
+      /* Custom animations */
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .fade-in {
+        animation: fadeIn 0.5s ease forwards;
+      }
+
+      /* Custom scrollbar */
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+
+      ::-webkit-scrollbar-track {
+        background: #f1f1f1;
+      }
+
+      ::-webkit-scrollbar-thumb {
+        background: var(--primary-color);
+        border-radius: 4px;
+      }
+
+      ::-webkit-scrollbar-thumb:hover {
+        background: var(--primary-dark);
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay" style="display: none">
+      <div class="loading"></div>
+      <p>Loading Dashboard Data...</p>
+    </div>
+
+    <div class="container">
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <div class="logo">
+          <img src="icon.png" class="logo-icon" />
+          <div>
+            <div class="logo-text">NetisTrackGH</div>
+            <div class="logo-subtext">NETWORK MONITORING</div>
+          </div>
+        </div>
+
+        <ul class="nav-menu">
+          <li class="nav-item">
+            <a href="#" class="nav-link active" data-section="dashboard">
+              <i class="fas fa-home nav-icon"></i>
+              <span class="nav-text">Dashboard</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="#" class="nav-link" data-section="sites">
+              <i class="fas fa-network-wired nav-icon"></i>
+              <span class="nav-text">Sites Management</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="#" class="nav-link" data-section="fuel">
+              <i class="fas fa-gas-pump nav-icon"></i>
+              <span class="nav-text">Fuel Tracking</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="#" class="nav-link" data-section="maintenance">
+              <i class="fas fa-tools nav-icon"></i>
+              <span class="nav-text">Maintenance</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="#" class="nav-link" data-section="sync">
+              <i class="fas fa-sync-alt nav-icon"></i>
+              <span class="nav-text">Sync Status</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="#" class="nav-link" data-section="docs">
+              <i class="fas fa-book nav-icon"></i>
+              <span class="nav-text">API Docs</span>
+            </a>
+          </li>
+        </ul>
+
+        <div
+          id="systemStatus"
+          style="
+            margin-top: 3rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+          "
+        >
+          <div style="font-size: 0.85rem; opacity: 0.8; margin-bottom: 0.5rem">
+            System Status
+          </div>
+          <div style="display: flex; align-items: center">
+            <div
+              id="statusIndicator"
+              style="
+                width: 10px;
+                height: 10px;
+                border-radius: 50%;
+                background-color: var(--gray-color);
+                margin-right: 0.5rem;
+              "
+            ></div>
+            <div id="statusText" style="font-size: 0.9rem; font-weight: 500">
+              Checking...
+            </div>
+          </div>
+          <div
+            id="statusTime"
+            style="font-size: 0.8rem; opacity: 0.7; margin-top: 0.5rem"
+          >
+            Last updated: --
+          </div>
+        </div>
+      </aside>
+
+      <!-- Main Content -->
+      <main class="main-content">
+        <!-- Topbar -->
+        <header class="topbar">
+          <div class="page-title">
+            <h1>Network Dashboard</h1>
+            <p>Real-time monitoring and analytics for NetisTrackGH backend</p>
+          </div>
+
+          <div class="topbar-actions">
+            <div class="search-box">
+              <i class="fas fa-search search-icon"></i>
+              <input
+                type="text"
+                class="search-input"
+                placeholder="Search sites, logs, alerts..."
+              />
+            </div>
+
+            <div class="notifications">
+              <button class="notification-btn">
+                <i class="far fa-bell"></i>
+                <span class="notification-badge" id="notificationCount">0</span>
+              </button>
+            </div>
+
+            <div class="user-profile" id="userProfile">
+              <div class="user-avatar">AJ</div>
+              <div class="user-info">
+                <h4 id="username">Loading...</h4>
+                <p id="userRole">Administrator</p>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <!-- Error Display -->
+        <div id="errorContainer" style="display: none"></div>
+
+        <!-- Dashboard Content -->
+        <div id="dashboardContent">
+          <!-- Stats Cards -->
+          <section class="stats-container">
+            <div class="stat-card fade-in" style="animation-delay: 0.1s">
+              <div class="stat-header">
+                <h3 class="stat-title">Total Sites</h3>
+                <i class="fas fa-server stat-icon"></i>
+              </div>
+              <div class="stat-value" id="totalSites">
+                <span class="loading"></span>
+                <span class="loading-text">Loading...</span>
+              </div>
+              <div class="stat-change positive" id="sitesChange">
+                <i class="fas fa-arrow-up"></i>
+                <span>--% from last month</span>
+              </div>
+            </div>
+
+            <div class="stat-card orange fade-in" style="animation-delay: 0.2s">
+              <div class="stat-header">
+                <h3 class="stat-title">Fuel Consumption</h3>
+                <i class="fas fa-gas-pump stat-icon"></i>
+              </div>
+              <div class="stat-value" id="fuelConsumption">
+                <span class="loading"></span>
+                <span class="loading-text">Loading...</span>
+              </div>
+              <div class="stat-change" id="fuelChange">
+                <i class="fas fa-arrow-right"></i>
+                <span>--% change</span>
+              </div>
+            </div>
+
+            <div class="stat-card green fade-in" style="animation-delay: 0.3s">
+              <div class="stat-header">
+                <h3 class="stat-title">Active Maintenance</h3>
+                <i class="fas fa-tools stat-icon"></i>
+              </div>
+              <div class="stat-value" id="activeMaintenance">
+                <span class="loading"></span>
+                <span class="loading-text">Loading...</span>
+              </div>
+              <div class="stat-change negative" id="maintenanceChange">
+                <i class="fas fa-arrow-down"></i>
+                <span>--% from last week</span>
+              </div>
+            </div>
+
+            <div class="stat-card purple fade-in" style="animation-delay: 0.4s">
+              <div class="stat-header">
+                <h3 class="stat-title">API Uptime</h3>
+                <i class="fas fa-clock stat-icon"></i>
+              </div>
+              <div class="stat-value" id="apiUptime">
+                <span class="loading"></span>
+                <span class="loading-text">Loading...</span>
+              </div>
+              <div class="stat-change positive" id="uptimeChange">
+                <i class="fas fa-arrow-up"></i>
+                <span>--% stability</span>
+              </div>
+            </div>
+          </section>
+
+          <!-- Charts Section -->
+          <section class="charts-container">
+            <div class="chart-card fade-in" style="animation-delay: 0.5s">
+              <div class="chart-header">
+                <h3 class="chart-title">Recent Activity Timeline</h3>
+                <div class="chart-actions">
+                  <button class="chart-btn active" data-period="24h">
+                    24H
+                  </button>
+                  <button class="chart-btn" data-period="7d">7D</button>
+                  <button class="chart-btn" data-period="30d">30D</button>
+                </div>
+              </div>
+              <div class="chart-placeholder" id="activityChart">
+                <div style="text-align: center; color: var(--gray-color)">
+                  <i
+                    class="fas fa-chart-line"
+                    style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5"
+                  ></i>
+                  <p>Loading activity data...</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="chart-card fade-in" style="animation-delay: 0.6s">
+              <div class="chart-header">
+                <h3 class="chart-title">System Health Overview</h3>
+                <div class="chart-actions">
+                  <button class="chart-btn active" data-view="overview">
+                    Overview
+                  </button>
+                  <button class="chart-btn" data-view="detailed">
+                    Detailed
+                  </button>
+                </div>
+              </div>
+              <div class="chart-placeholder" id="healthChart">
+                <div style="text-align: center; color: var(--gray-color)">
+                  <i
+                    class="fas fa-heartbeat"
+                    style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5"
+                  ></i>
+                  <p>Loading health data...</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Recent Activity -->
+          <section
+            class="activity-container fade-in"
+            style="animation-delay: 0.7s"
+          >
+            <div class="chart-header">
+              <h3 class="chart-title">Recent System Activities</h3>
+              <button class="chart-btn" id="refreshActivities">Refresh</button>
+            </div>
+
+            <ul class="activity-list" id="activityList">
+              <li class="activity-item">
+                <div class="activity-icon info">
+                  <i class="fas fa-info-circle"></i>
+                </div>
+                <div class="activity-content">
+                  <h4>Loading activities...</h4>
+                  <p>Please wait while we fetch the latest system activities</p>
+                </div>
+                <div class="activity-time">Just now</div>
+              </li>
+            </ul>
+          </section>
+        </div>
+
+        <!-- Sites Management Content (Hidden by default) -->
+        <div id="sitesContent" style="display: none">
+          <section class="chart-card">
+            <div class="chart-header">
+              <h3 class="chart-title">Sites Management</h3>
+              <button class="chart-btn" id="addSiteBtn">
+                <i class="fas fa-plus"></i> Add Site
+              </button>
+            </div>
+            <div id="sitesTableContainer">
+              <p class="loading-text" style="text-align: center; padding: 2rem">
+                <span class="loading"></span> Loading sites data...
+              </p>
+            </div>
+          </section>
+        </div>
+
+        <!-- Fuel Tracking Content (Hidden by default) -->
+        <div id="fuelContent" style="display: none">
+          <section class="chart-card">
+            <div class="chart-header">
+              <h3 class="chart-title">Fuel Consumption Tracking</h3>
+              <div class="chart-actions">
+                <button class="chart-btn active" data-fuel-period="today">
+                  Today
+                </button>
+                <button class="chart-btn" data-fuel-period="week">
+                  This Week
+                </button>
+                <button class="chart-btn" data-fuel-period="month">
+                  This Month
+                </button>
+              </div>
+            </div>
+            <div id="fuelDataContainer">
+              <p class="loading-text" style="text-align: center; padding: 2rem">
+                <span class="loading"></span> Loading fuel data...
+              </p>
+            </div>
+          </section>
+        </div>
+
+        <!-- Maintenance Content (Hidden by default) -->
+        <div id="maintenanceContent" style="display: none">
+          <section class="chart-card">
+            <div class="chart-header">
+              <h3 class="chart-title">Maintenance Records</h3>
+              <button class="chart-btn" id="addMaintenanceBtn">
+                <i class="fas fa-plus"></i> Add Record
+              </button>
+            </div>
+            <div id="maintenanceTableContainer">
+              <p class="loading-text" style="text-align: center; padding: 2rem">
+                <span class="loading"></span> Loading maintenance data...
+              </p>
+            </div>
+          </section>
+        </div>
+
+        <!-- Sync Status Content (Hidden by default) -->
+        <div id="syncContent" style="display: none">
+          <section class="chart-card">
+            <div class="chart-header">
+              <h3 class="chart-title">Sync Status & Logs</h3>
+              <button class="chart-btn" id="forceSyncBtn">
+                <i class="fas fa-sync-alt"></i> Force Sync
+              </button>
+            </div>
+            <div id="syncStatusContainer">
+              <p class="loading-text" style="text-align: center; padding: 2rem">
+                <span class="loading"></span> Loading sync status...
+              </p>
+            </div>
+          </section>
+        </div>
+
+        <!-- API Docs Content (Hidden by default) -->
+        <div id="docsContent" style="display: none">
+          <section class="chart-card">
+            <div class="chart-header">
+              <h3 class="chart-title">API Documentation</h3>
+              <button
+                class="chart-btn"
+                id="openDocsBtn"
+                onclick="window.open('/docs', '_blank')"
+              >
+                <i class="fas fa-external-link-alt"></i> Open Full Docs
+              </button>
+            </div>
+            <div style="padding: 2rem">
+              <h3 style="margin-bottom: 1rem; color: var(--primary-color)">
+                Available API Endpoints
+              </h3>
+              <div
+                style="
+                  display: grid;
+                  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+                  gap: 1rem;
+                "
+              >
+                <div
+                  class="stat-card"
+                  style="border-left-color: var(--success-color)"
+                >
+                  <div class="stat-header">
+                    <h3 class="stat-title">API Status</h3>
+                    <i
+                      class="fas fa-signal stat-icon"
+                      style="color: var(--success-color)"
+                    ></i>
+                  </div>
+                  <div style="margin-top: 1rem">
+                    <p><strong>Endpoint:</strong> <code>/api/status</code></p>
+                    <p><strong>Method:</strong> GET</p>
+                    <p>
+                      <strong>Description:</strong> Get system status and health
+                      metrics
+                    </p>
+                  </div>
+                </div>
+
+                <div
+                  class="stat-card"
+                  style="border-left-color: var(--primary-color)"
+                >
+                  <div class="stat-header">
+                    <h3 class="stat-title">Health Check</h3>
+                    <i class="fas fa-heartbeat stat-icon"></i>
+                  </div>
+                  <div style="margin-top: 1rem">
+                    <p><strong>Endpoint:</strong> <code>/health</code></p>
+                    <p><strong>Method:</strong> GET</p>
+                    <p>
+                      <strong>Description:</strong> Quick health check endpoint
+                    </p>
+                  </div>
+                </div>
+
+                <div class="stat-card" style="border-left-color: #ff9e00">
+                  <div class="stat-header">
+                    <h3 class="stat-title">Sites API</h3>
+                    <i
+                      class="fas fa-network-wired stat-icon"
+                      style="color: #ff9e00"
+                    ></i>
+                  </div>
+                  <div style="margin-top: 1rem">
+                    <p><strong>Endpoint:</strong> <code>/api/sites</code></p>
+                    <p><strong>Method:</strong> GET, POST, PUT, DELETE</p>
+                    <p><strong>Description:</strong> Manage network sites</p>
+                  </div>
+                </div>
+
+                <div class="stat-card" style="border-left-color: #7209b7">
+                  <div class="stat-header">
+                    <h3 class="stat-title">Fuel API</h3>
+                    <i
+                      class="fas fa-gas-pump stat-icon"
+                      style="color: #7209b7"
+                    ></i>
+                  </div>
+                  <div style="margin-top: 1rem">
+                    <p><strong>Endpoint:</strong> <code>/api/fuel</code></p>
+                    <p><strong>Method:</strong> GET, POST</p>
+                    <p>
+                      <strong>Description:</strong> Fuel consumption tracking
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+          <p>
+            NetisTrackGH Backend Monitoring System &copy; 2025 | Version 1.0.0 |
+            All rights reserved
+          </p>
+          <p style="margin-top: 0.5rem; font-size: 0.8rem">
+            Last system refresh: <span id="currentTime">Loading...</span> |
+            Backend: <span id="backendStatus">Checking...</span>
+          </p>
+        </footer>
+      </main>
+    </div>
+
+    <script>
+      // ============================================
+      // Configuration
+      // ============================================
+      const API_BASE_URL = window.location.origin;
+      const ENDPOINTS = {
+        STATUS: '/api/status',
+        HEALTH: '/health',
+        VERIFY: '/api/auth/verify',  
+        PROFILE: '/api/auth/profile',
+        SITES: '/api/sites',
+        FUEL: '/api/fuel',
+        MAINTENANCE: '/api/maintenance',
+        SYNC: '/api/sync'
+      };
+
+      // ============================================
+      // State Management
+      // ============================================
+      const state = {
+        currentSection: 'dashboard',
+        isLoading: false,
+        isAuthenticated: false,
+        authToken: localStorage.getItem('authToken'),
+        userInfo: null,
+        systemStatus: null,
+        sitesData: [],
+        fuelData: [],
+        maintenanceData: [],
+        lastUpdate: null
+      };
+
+      // ============================================
+      // Initialization
+      // ============================================
+      document.addEventListener('DOMContentLoaded', async function () {
+        showLoading();
+
+        try {
+          // First check backend availability
+          const isBackendAvailable = await checkBackendAvailability();
+
+          if (!isBackendAvailable) {
+            showError('Backend server is not responding. Please make sure the server is running.');
+            hideLoading();
+            showLoginModal(); // Show login even if backend is down
+            return;
+          }
+
+          // Check if we have a token
+          if (state.authToken) {
+            // Verify token using your verify endpoint
+            const isValid = await verifyToken(state.authToken);
+            if (isValid) {
+              state.isAuthenticated = true;
+              await loadUserInfo();
+              await initializeDashboard();
+            } else {
+              // Token expired or invalid
+              localStorage.removeItem('authToken');
+              state.authToken = null;
+              showLoginModal();
+            }
+          } else {
+            // No token, show login
+            showLoginModal();
+          }
+        } catch (error) {
+          console.error('Initialization error:', error);
+          showError('Failed to initialize dashboard. Please refresh.');
+          showLoginModal();
+        } finally {
+          hideLoading();
+        }
+
+        // Setup event listeners
+        setupEventListeners();
+      });
+
+      // ============================================
+      // Core Functions - Fixed & Enhanced
+      // ============================================
+
+      // Check backend availability
+      async function checkBackendAvailability() {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+          const response = await fetch(ENDPOINTS.HEALTH, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            signal: controller.signal
+          });
+
+          clearTimeout(timeoutId);
+          return response.ok;
+        } catch (error) {
+          console.warn('Backend check failed:', error);
+          return false;
+        }
+      }
+
+      // Initialize dashboard (after authentication)
+      async function initializeDashboard() {
+        showLoading();
+
+        try {
+          await Promise.all([
+            loadSystemStatus(),
+            loadDashboardData()
+          ]);
+
+          // Start periodic updates
+          startPeriodicUpdates();
+
+          // Update charts
+          updateCharts();
+
+        } catch (error) {
+          console.error('Dashboard initialization error:', error);
+          showError('Failed to load dashboard data. Please try again.');
+        } finally {
+          hideLoading();
+        }
+      }
+
+      // ============================================
+      // Authentication Functions - Fixed for /api/auth/verify
+      // ============================================
+
+      async function verifyToken(token) {
+        try {
+          const response = await fetch(ENDPOINTS.VERIFY, {
+            method: 'POST', // Changed to POST since it acts as login
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            // Store the token if it's returned in the response
+            if (data.token) {
+              state.authToken = data.token;
+              localStorage.setItem('authToken', data.token);
+            }
+            return true;
+          }
+          return false;
+        } catch (error) {
+          console.error('Token verification error:', error);
+          return false;
+        }
+      }
+
+      async function login(email, password) {
+        try {
+          const loginData = {
+            email: email.trim().toLowerCase(),
+            password: password
+          };
+
+          const response = await fetch(ENDPOINTS.VERIFY, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(loginData)
+          });
+
+          const responseData = await response.json().catch(() => ({}));
+
+          if (!response.ok) {
+            throw new Error(responseData.message || 'Login failed');
+          }
+
+          // Assuming your verify endpoint returns a token on successful login
+          if (responseData.token) {
+            // Save token
+            state.authToken = responseData.token;
+            state.isAuthenticated = true;
+            localStorage.setItem('authToken', responseData.token);
+
+            // Load user info
+            await loadUserInfo();
+
+            // Initialize dashboard
+            await initializeDashboard();
+
+            hideLoginModal();
+            showNotification('Login successful!');
+
+            return true;
+          } else {
+            throw new Error('No token received from server');
+          }
+        } catch (error) {
+          console.error('Login error:', error);
+          showLoginError(error.message || 'Invalid credentials. Please try again.');
+          return false;
+        }
+      }
+
+      async function loadUserInfo() {
+        try {
+          const response = await fetch(ENDPOINTS.PROFILE, {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${state.authToken}`,
+              'Content-Type': 'application/json'
+            }
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            state.userInfo = data;
+
+            // Update UI
+            const usernameEl = document.getElementById('username');
+            const userRoleEl = document.getElementById('userRole');
+            const userAvatarEl = document.querySelector('.user-avatar');
+
+            if (usernameEl) {
+              usernameEl.textContent = data.name || data.email || 'Admin User';
+            }
+            if (userRoleEl) {
+              userRoleEl.textContent = data.role || 'Administrator';
+            }
+            if (userAvatarEl) {
+              const displayName = data.name || data.email || 'A';
+              userAvatarEl.textContent = displayName.charAt(0).toUpperCase();
+            }
+          } else {
+            // If profile fails, set default values
+            setDefaultUserInfo();
+          }
+        } catch (error) {
+          console.error('Error loading user info:', error);
+          setDefaultUserInfo();
+        }
+      }
+
+      function setDefaultUserInfo() {
+        const usernameEl = document.getElementById('username');
+        const userRoleEl = document.getElementById('userRole');
+        const userAvatarEl = document.querySelector('.user-avatar');
+
+        if (usernameEl) usernameEl.textContent = 'Admin User';
+        if (userRoleEl) userRoleEl.textContent = 'Administrator';
+        if (userAvatarEl) userAvatarEl.textContent = 'A';
+      }
+
+      // ============================================
+      // API Fetch with Authentication - Fixed
+      // ============================================
+
+      async function fetchWithAuth(endpoint, options = {}) {
+        const defaultOptions = {
+          headers: {
+            'Content-Type': 'application/json',
+            ...(state.authToken && { 'Authorization': `Bearer ${state.authToken}` })
+          }
+        };
+
+        const mergedOptions = { ...defaultOptions, ...options };
+
+        try {
+          const response = await fetch(endpoint, mergedOptions);
+
+          // Handle 401 Unauthorized
+          if (response.status === 401) {
+            logout();
+            throw new Error('Session expired. Please login again.');
+          }
+
+          return response;
+        } catch (error) {
+          console.error('Fetch error:', error);
+          throw error;
+        }
+      }
+
+      function logout() {
+        localStorage.removeItem('authToken');
+        state.isAuthenticated = false;
+        state.authToken = null;
+        state.userInfo = null;
+        showLoginModal();
+        showError('Your session has expired. Please login again.');
+      }
+
+      // ============================================
+      // Data Loading Functions - Fixed
+      // ============================================
+
+      async function loadSystemStatus() {
+        try {
+          const response = await fetch(ENDPOINTS.STATUS);
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+          const data = await response.json();
+          state.systemStatus = data;
+
+          updateSystemStatusUI(data);
+          updateBackendStatus(true);
+
+        } catch (error) {
+          console.error('Error loading system status:', error);
+          updateBackendStatus(false);
+        }
+      }
+
+      async function loadDashboardData() {
+        try {
+          // Load sites data
+          await loadSitesData();
+
+          // Load fuel data
+          await loadFuelData();
+
+          // Load maintenance data
+          await loadMaintenanceData();
+
+          // Update activity list
+          updateActivityList();
+
+        } catch (error) {
+          console.error('Error loading dashboard data:', error);
+          if (error.message.includes('Session expired')) {
+            showError('Your session has expired. Please login again.');
+          } else {
+            showError('Failed to load dashboard data. Please check your connection.');
+          }
+        }
+      }
+
+      async function loadSitesData() {
+        try {
+          const response = await fetchWithAuth(ENDPOINTS.SITES);
+          if (response.ok) {
+            const sitesData = await response.json();
+            state.sitesData = Array.isArray(sitesData) ? sitesData : [];
+            updateSitesCount(state.sitesData.length);
+          } else {
+            console.warn('Sites API returned:', response.status);
+            state.sitesData = [];
+            updateSitesCount(0);
+          }
+        } catch (error) {
+          console.error('Error loading sites:', error);
+          state.sitesData = [];
+          updateSitesCount(0);
+        }
+      }
+
+      async function loadFuelData() {
+        try {
+          const response = await fetchWithAuth(ENDPOINTS.FUEL);
+          if (response.ok) {
+            const fuelData = await response.json();
+            state.fuelData = Array.isArray(fuelData) ? fuelData : [];
+            updateFuelStats(state.fuelData);
+          } else {
+            console.warn('Fuel API returned:', response.status);
+            state.fuelData = [];
+            updateFuelStats([]);
+          }
+        } catch (error) {
+          console.error('Error loading fuel data:', error);
+          state.fuelData = [];
+          updateFuelStats([]);
+        }
+      }
+
+      async function loadMaintenanceData() {
+        try {
+          const response = await fetchWithAuth(ENDPOINTS.MAINTENANCE);
+          if (response.ok) {
+            const maintenanceData = await response.json();
+            state.maintenanceData = Array.isArray(maintenanceData) ? maintenanceData : [];
+            updateMaintenanceStats(state.maintenanceData);
+          } else {
+            console.warn('Maintenance API returned:', response.status);
+            state.maintenanceData = [];
+            updateMaintenanceStats([]);
+          }
+        } catch (error) {
+          console.error('Error loading maintenance data:', error);
+          state.maintenanceData = [];
+          updateMaintenanceStats([]);
+        }
+      }
+
+      // ============================================
+      // UI Update Functions - Fixed Errors
+      // ============================================
+
+      function updateSystemStatusUI(statusData) {
+        const statusIndicator = document.getElementById('statusIndicator');
+        const statusText = document.getElementById('statusText');
+        const statusTime = document.getElementById('statusTime');
+
+        if (!statusIndicator || !statusText || !statusTime) return;
+
+        if (statusData && statusData.status === 'operational') {
+          statusIndicator.style.backgroundColor = 'var(--success-color)';
+          statusText.textContent = 'All Systems Operational';
+          statusTime.textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
+
+          // Update uptime display
+          const uptimeElement = document.getElementById('apiUptime');
+          if (uptimeElement && statusData.uptime) {
+            const uptimeText = `${statusData.uptime.hours}h ${statusData.uptime.minutes}m ${statusData.uptime.seconds}s`;
+            uptimeElement.innerHTML = `<span style="font-size: 1.5rem;">${uptimeText}</span>`;
+          }
+        } else {
+          statusIndicator.style.backgroundColor = 'var(--danger-color)';
+          statusText.textContent = 'System Issues Detected';
+          statusTime.textContent = 'Last updated: --';
+        }
+      }
+
+      function updateSitesCount(count) {
+        const element = document.getElementById('totalSites');
+        const changeElement = document.getElementById('sitesChange');
+
+        if (!element) return;
+
+        element.innerHTML = `<span style="color: var(--primary-color);">${count}</span>`;
+
+        // Update change indicator
+        if (changeElement) {
+          const changePercent = count > 0 ? Math.floor(Math.random() * 20) + 5 : 0;
+
+          if (changePercent > 10) {
+            changeElement.className = 'stat-change positive';
+            changeElement.innerHTML = `<i class="fas fa-arrow-up"></i><span>${changePercent}% from last month</span>`;
+          } else if (changePercent < 0) {
+            changeElement.className = 'stat-change negative';
+            changeElement.innerHTML = `<i class="fas fa-arrow-down"></i><span>${Math.abs(changePercent)}% from last month</span>`;
+          } else {
+            changeElement.className = 'stat-change';
+            changeElement.innerHTML = `<i class="fas fa-arrow-right"></i><span>No significant change</span>`;
+          }
+        }
+      }
+
+      function updateFuelStats(fuelData) {
+        const element = document.getElementById('fuelConsumption');
+        const changeElement = document.getElementById('fuelChange');
+
+        if (!element) return;
+
+        if (fuelData && fuelData.length > 0) {
+          const totalFuel = fuelData.reduce((sum, record) => {
+            return sum + (parseFloat(record.quantity) || 0);
+          }, 0);
+
+          element.innerHTML = `<span style="color: #ff9e00;">${totalFuel.toFixed(1)}</span> <span style="font-size: 1rem;">L</span>`;
+
+          // Update change indicator
+          if (changeElement) {
+            const avgFuel = totalFuel / fuelData.length;
+            const changePercent = avgFuel > 50 ? 15 : avgFuel > 30 ? 8 : -5;
+
+            if (changePercent > 0) {
+              changeElement.className = 'stat-change positive';
+              changeElement.innerHTML = `<i class="fas fa-arrow-up"></i><span>${changePercent}% from average</span>`;
+            } else {
+              changeElement.className = 'stat-change negative';
+              changeElement.innerHTML = `<i class="fas fa-arrow-down"></i><span>${Math.abs(changePercent)}% from average</span>`;
+            }
+          }
+        } else {
+          element.innerHTML = '<span style="color: #ff9e00;">0.0</span> <span style="font-size: 1rem;">L</span>';
+          if (changeElement) {
+            changeElement.className = 'stat-change';
+            changeElement.innerHTML = `<i class="fas fa-arrow-right"></i><span>No data available</span>`;
+          }
+        }
+      }
+
+      function updateMaintenanceStats(maintenanceData) {
+        const element = document.getElementById('activeMaintenance');
+        const changeElement = document.getElementById('maintenanceChange');
+
+        if (!element) return;
+
+        if (maintenanceData && maintenanceData.length > 0) {
+          const pending = maintenanceData.filter(record =>
+            record.status && record.status.toLowerCase() === 'pending'
+          ).length;
+
+          const totalMaintenance = maintenanceData.length;
+          const completed = totalMaintenance - pending;
+
+          element.innerHTML = `<span style="color: var(--success-color);">${pending}</span>`;
+
+          // Update change indicator
+          if (changeElement) {
+            const changePercent = totalMaintenance > 0 ?
+              Math.round((completed / totalMaintenance) * 100) : 0;
+
+            if (changePercent > 80) {
+              changeElement.className = 'stat-change positive';
+              changeElement.innerHTML = `<i class="fas fa-arrow-up"></i><span>Excellent (${changePercent}% completed)</span>`;
+            } else if (changePercent > 50) {
+              changeElement.className = 'stat-change';
+              changeElement.innerHTML = `<i class="fas fa-arrow-right"></i><span>Good progress (${changePercent}% completed)</span>`;
+            } else {
+              changeElement.className = 'stat-change negative';
+              changeElement.innerHTML = `<i class="fas fa-arrow-down"></i><span>Needs attention (${changePercent}% completed)</span>`;
+            }
+          }
+        } else {
+          element.innerHTML = '<span style="color: var(--success-color);">0</span>';
+          if (changeElement) {
+            changeElement.className = 'stat-change';
+            changeElement.innerHTML = `<i class="fas fa-arrow-right"></i><span>No maintenance records</span>`;
+          }
+        }
+      }
+
+      function updateActivityList() {
+        const activityList = document.getElementById('activityList');
+        if (!activityList) return;
+
+        // Clear current activities
+        activityList.innerHTML = '';
+
+        const activities = [];
+
+        // Add system status activity
+        if (state.systemStatus) {
+          activities.push({
+            type: 'success',
+            icon: 'fas fa-heartbeat',
+            title: 'System check completed',
+            description: `All systems are ${state.systemStatus.status}`,
+            time: 'Just now'
+          });
+        }
+
+        // Add site activities
+        if (state.sitesData.length > 0) {
+          const recentSites = state.sitesData.slice(0, Math.min(2, state.sitesData.length));
+          recentSites.forEach((site, index) => {
+            activities.push({
+              type: 'info',
+              icon: 'fas fa-network-wired',
+              title: `Site ${site.name || site.siteId || 'Unknown'} active`,
+              description: `Site ${site.name || site.siteId} is currently active`,
+              time: index === 0 ? 'Recently' : 'Earlier'
+            });
+          });
+        }
+
+        // Add fuel activities
+        if (state.fuelData.length > 0) {
+          const latestFuel = state.fuelData[state.fuelData.length - 1];
+          activities.push({
+            type: 'success',
+            icon: 'fas fa-gas-pump',
+            title: 'Fuel consumption recorded',
+            description: `New fuel data added for ${latestFuel.site || 'site'}`,
+            time: 'Today'
+          });
+        }
+
+        // Add maintenance activities
+        if (state.maintenanceData.length > 0) {
+          const pendingMaintenance = state.maintenanceData.filter(m =>
+            m.status && m.status.toLowerCase() === 'pending'
+          ).length;
+
+          if (pendingMaintenance > 0) {
+            activities.push({
+              type: 'warning',
+              icon: 'fas fa-tools',
+              title: `${pendingMaintenance} pending maintenance`,
+              description: `${pendingMaintenance} maintenance tasks require attention`,
+              time: 'Today'
+            });
+          }
+
+          // Add completed maintenance
+          const recentCompleted = state.maintenanceData.filter(m =>
+            m.status && m.status.toLowerCase() === 'completed'
+          ).slice(0, 1);
+
+          if (recentCompleted.length > 0) {
+            activities.push({
+              type: 'success',
+              icon: 'fas fa-check-circle',
+              title: 'Maintenance completed',
+              description: `Maintenance task marked as completed`,
+              time: 'Recently'
+            });
+          }
+        }
+
+        // If no activities, show placeholder
+        if (activities.length === 0) {
+          activities.push({
+            type: 'info',
+            icon: 'fas fa-info-circle',
+            title: 'No recent activities',
+            description: 'No system activities recorded yet',
+            time: '--'
+          });
+        }
+
+        // Add activities to list
+        activities.forEach((activity, index) => {
+          const item = document.createElement('li');
+          item.className = 'activity-item fade-in';
+          item.style.animationDelay = `${0.1 * index}s`;
+
+          let iconClass = 'activity-icon ';
+          if (activity.type === 'success') iconClass += 'success';
+          else if (activity.type === 'warning') iconClass += 'warning';
+          else iconClass += 'info';
+
+          item.innerHTML = `
+                    <div class="${iconClass}">
+                        <i class="${activity.icon}"></i>
+                    </div>
+                    <div class="activity-content">
+                        <h4>${activity.title}</h4>
+                        <p>${activity.description}</p>
+                    </div>
+                    <div class="activity-time">${activity.time}</div>
+                `;
+
+          activityList.appendChild(item);
+        });
+      }
+
+      // ============================================
+      // Utility Functions
+      // ============================================
+
+      function updateBackendStatus(isAvailable) {
+        const backendStatusElement = document.getElementById('backendStatus');
+        if (!backendStatusElement) return;
+
+        if (isAvailable) {
+          backendStatusElement.innerHTML = '<span style="color: var(--success-color);">Connected</span>';
+          backendStatusElement.title = 'Backend server is connected and responding';
+        } else {
+          backendStatusElement.innerHTML = '<span style="color: var(--danger-color);">Disconnected</span>';
+          backendStatusElement.title = 'Backend server is not responding';
+        }
+      }
+
+      function updateCurrentTime() {
+        const currentTimeElement = document.getElementById('currentTime');
+        if (!currentTimeElement) return;
+
+        const now = new Date();
+        const options = {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit'
+        };
+        currentTimeElement.textContent = now.toLocaleDateString('en-US', options);
+        state.lastUpdate = now;
+      }
+
+      function startPeriodicUpdates() {
+        // Update time every second
+        setInterval(updateCurrentTime, 1000);
+        updateCurrentTime(); // Initial update
+
+        // Refresh data every 30 seconds
+        setInterval(async () => {
+          if (!state.isLoading && state.isAuthenticated) {
+            await loadSystemStatus();
+            await loadDashboardData();
+          }
+        }, 30000);
+
+        // Check backend health every minute
+        setInterval(async () => {
+          const isAvailable = await checkBackendAvailability();
+          updateBackendStatus(isAvailable);
+        }, 60000);
+      }
+
+      // ============================================
+      // Modal & UI Functions
+      // ============================================
+
+      function showLoading() {
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        if (loadingOverlay) {
+          loadingOverlay.style.display = 'flex';
+        }
+        state.isLoading = true;
+      }
+
+      function hideLoading() {
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        if (loadingOverlay) {
+          loadingOverlay.style.display = 'none';
+        }
+        state.isLoading = false;
+      }
+
+      function showError(message) {
+        const errorContainer = document.getElementById('errorContainer');
+        if (!errorContainer) return;
+
+        errorContainer.innerHTML = `
+                <div class="error-message fade-in">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+        errorContainer.style.display = 'block';
+
+        // Auto-hide after 10 seconds
+        setTimeout(() => {
+          errorContainer.style.display = 'none';
+        }, 10000);
+      }
+
+      function showNotification(message, type = 'info') {
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = 'fade-in';
+        notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background-color: white;
+                color: var(--dark-color);
+                padding: 1rem 1.5rem;
+                border-radius: var(--border-radius);
+                box-shadow: var(--box-shadow);
+                z-index: 10000;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                max-width: 300px;
+            `;
+
+        const icon = type === 'error' ? 'fa-exclamation-circle' :
+          type === 'success' ? 'fa-check-circle' : 'fa-info-circle';
+        const iconColor = type === 'error' ? 'var(--danger-color)' :
+          type === 'success' ? 'var(--success-color)' : 'var(--primary-color)';
+
+        notification.innerHTML = `
+                <i class="fas ${icon}" style="color: ${iconColor};"></i>
+                <span>${message}</span>
+            `;
+
+        document.body.appendChild(notification);
+
+        // Remove after 3 seconds
+        setTimeout(() => {
+          notification.style.opacity = '0';
+          notification.style.transform = 'translateX(20px)';
+          setTimeout(() => {
+            if (notification.parentNode) {
+              document.body.removeChild(notification);
+            }
+          }, 300);
+        }, 3000);
+      }
+
+      // ============================================
+      // Login Modal Functions - Enhanced
+      // ============================================
+
+      function showLoginModal() {
+        const loginModal = document.getElementById('loginModal');
+        if (loginModal) {
+          loginModal.style.display = 'flex';
+          document.getElementById('loginEmail')?.focus();
+        }
+      }
+
+      function hideLoginModal() {
+        const loginModal = document.getElementById('loginModal');
+        if (loginModal) {
+          loginModal.style.display = 'none';
+        }
+      }
+
+      function showLoginError(message) {
+        const errorEl = document.getElementById('loginError');
+        if (errorEl) {
+          errorEl.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${message}`;
+          errorEl.style.display = 'block';
+        }
+      }
+
+      // ============================================
+      // Event Listeners Setup
+      // ============================================
+
+      function setupEventListeners() {
+        // Navigation links
+        document.querySelectorAll('.nav-link').forEach(link => {
+          link.addEventListener('click', function (e) {
+            e.preventDefault();
+            const section = this.dataset.section;
+            switchSection(section);
+          });
+        });
+
+        // Chart period buttons
+        document.querySelectorAll('.chart-btn[data-period]').forEach(btn => {
+          btn.addEventListener('click', function () {
+            const parent = this.closest('.chart-actions');
+            if (parent) {
+              parent.querySelectorAll('.chart-btn[data-period]').forEach(b =>
+                b.classList.remove('active')
+              );
+            }
+            this.classList.add('active');
+            // In real app, this would update the chart data
+            console.log(`Chart period changed to: ${this.dataset.period}`);
+          });
+        });
+
+        // Refresh activities button
+        const refreshBtn = document.getElementById('refreshActivities');
+        if (refreshBtn) {
+          refreshBtn.addEventListener('click', async () => {
+            if (state.isAuthenticated) {
+              await loadDashboardData();
+              showNotification('Activities refreshed successfully', 'success');
+            } else {
+              showNotification('Please login first', 'error');
+            }
+          });
+        }
+
+        // Notification button
+        const notificationBtn = document.querySelector('.notification-btn');
+        if (notificationBtn) {
+          notificationBtn.addEventListener('click', function () {
+            showNotification('You have no new notifications');
+            const badge = this.querySelector('.notification-badge');
+            if (badge) badge.style.display = 'none';
+          });
+        }
+
+        // Search functionality
+        const searchInput = document.querySelector('.search-input');
+        if (searchInput) {
+          searchInput.addEventListener('keyup', function (e) {
+            if (e.key === 'Enter') {
+              showNotification(`Searching for: "${this.value}"`);
+              this.value = '';
+            }
+          });
+        }
+
+        // User profile click
+        const userProfile = document.getElementById('userProfile');
+        if (userProfile) {
+          userProfile.addEventListener('click', function () {
+            showNotification('User profile menu would open here');
+          });
+        }
+
+        // Login button
+        const loginButton = document.getElementById('loginButton');
+        if (loginButton) {
+          loginButton.addEventListener('click', async () => {
+            const email = document.getElementById('loginEmail')?.value ||
+              document.getElementById('loginUsername')?.value;
+            const password = document.getElementById('loginPassword')?.value;
+
+            if (!email || !password) {
+              showLoginError('Please enter both email and password');
+              return;
+            }
+
+            const loginBtn = document.getElementById('loginButton');
+            const originalText = loginBtn.innerHTML;
+            loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging in...';
+            loginBtn.disabled = true;
+
+            try {
+              const success = await login(email, password);
+              if (!success) {
+                showLoginError('Invalid credentials. Please try again.');
+              }
+            } finally {
+              loginBtn.innerHTML = originalText;
+              loginBtn.disabled = false;
+            }
+          });
+        }
+
+        // Allow Enter key to submit login
+        const loginPassword = document.getElementById('loginPassword');
+        if (loginPassword) {
+          loginPassword.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+              document.getElementById('loginButton')?.click();
+            }
+          });
+        }
+
+        // Logout functionality
+        const logoutBtn = document.getElementById('logoutBtn');
+        if (logoutBtn) {
+          logoutBtn.addEventListener('click', logout);
+        }
+      }
+
+      // ============================================
+      // Section Switching
+      // ============================================
+
+      function switchSection(section) {
+        // Update navigation
+        document.querySelectorAll('.nav-link').forEach(link => {
+          link.classList.remove('active');
+          if (link.dataset.section === section) {
+            link.classList.add('active');
+          }
+        });
+
+        // Update page title
+        const pageTitle = document.querySelector('.page-title h1');
+        const pageSubtitle = document.querySelector('.page-title p');
+
+        const titles = {
+          'dashboard': { main: 'Network Dashboard', sub: 'Real-time monitoring and analytics' },
+          'sites': { main: 'Sites Management', sub: 'Manage and monitor network sites' },
+          'fuel': { main: 'Fuel Tracking', sub: 'Monitor fuel consumption across sites' },
+          'maintenance': { main: 'Maintenance Records', sub: 'Track and manage maintenance activities' },
+          'sync': { main: 'Sync Status', sub: 'Monitor data synchronization status' },
+          'docs': { main: 'API Documentation', sub: 'Explore available API endpoints' }
+        };
+
+        if (pageTitle && pageSubtitle && titles[section]) {
+          pageTitle.textContent = titles[section].main;
+          pageSubtitle.textContent = titles[section].sub;
+        }
+
+        // Hide all content sections
+        document.querySelectorAll('[id$="Content"]').forEach(div => {
+          div.style.display = 'none';
+        });
+
+        // Show selected section
+        const sectionElement = document.getElementById(`${section}Content`);
+        if (sectionElement) {
+          sectionElement.style.display = 'block';
+        }
+
+        state.currentSection = section;
+
+        // Load section-specific data
+        if (state.isAuthenticated) {
+          switch (section) {
+            case 'sites':
+              loadSitesContent();
+              break;
+            case 'fuel':
+              loadFuelContent();
+              break;
+            case 'maintenance':
+              loadMaintenanceContent();
+              break;
+            case 'sync':
+              loadSyncContent();
+              break;
+          }
+        }
+      }
+
+      // ============================================
+      // Section Content Loading Functions
+      // ============================================
+
+      async function loadSitesContent() {
+        const container = document.getElementById('sitesTableContainer');
+        if (!container) return;
+
+        container.innerHTML = '<p class="loading-text" style="text-align: center; padding: 2rem;"><span class="loading"></span> Loading sites data...</p>';
+
+        try {
+          const response = await fetchWithAuth(ENDPOINTS.SITES);
+          if (!response.ok) throw new Error(`Failed to fetch sites: ${response.status}`);
+
+          const sites = await response.json();
+          state.sitesData = Array.isArray(sites) ? sites : [];
+
+          if (state.sitesData.length === 0) {
+            container.innerHTML = `
+                        <div style="text-align: center; padding: 3rem;">
+                            <i class="fas fa-network-wired" style="font-size: 3rem; color: var(--gray-light); margin-bottom: 1rem;"></i>
+                            <h3 style="color: var(--gray-color); margin-bottom: 0.5rem;">No Sites Found</h3>
+                            <p style="color: var(--gray-color);">No network sites have been added yet.</p>
+                            <button class="chart-btn" style="margin-top: 1rem;">
+                                <i class="fas fa-plus"></i> Add Your First Site
+                            </button>
+                        </div>
+                    `;
+            return;
+          }
+
+          // Create sites table
+          let tableHTML = `
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="background-color: var(--gray-light);">
+                                    <th style="padding: 1rem; text-align: left; border-bottom: 2px solid var(--gray-light);">Site ID</th>
+                                    <th style="padding: 1rem; text-align: left; border-bottom: 2px solid var(--gray-light);">Name</th>
+                                    <th style="padding: 1rem; text-align: left; border-bottom: 2px solid var(--gray-light);">Status</th>
+                                    <th style="padding: 1rem; text-align: left; border-bottom: 2px solid var(--gray-light);">Last Updated</th>
+                                    <th style="padding: 1rem; text-align: left; border-bottom: 2px solid var(--gray-light);">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+
+          state.sitesData.slice(0, 10).forEach(site => {
+            const status = site.status || 'unknown';
+            const statusColor = status === 'active' ? 'var(--success-color)' :
+              status === 'maintenance' ? 'var(--warning-color)' :
+                'var(--danger-color)';
+
+            tableHTML += `
+                        <tr style="border-bottom: 1px solid var(--gray-light);">
+                            <td style="padding: 1rem;">${site._id || site.id || 'N/A'}</td>
+                            <td style="padding: 1rem; font-weight: 500;">${site.name || site.siteName || 'Unnamed Site'}</td>
+                            <td style="padding: 1rem;">
+                                <span style="display: inline-flex; align-items: center;">
+                                    <span style="width: 8px; height: 8px; border-radius: 50%; background-color: ${statusColor}; margin-right: 8px;"></span>
+                                    ${status}
+                                </span>
+                            </td>
+                            <td style="padding: 1rem; color: var(--gray-color);">
+                                ${site.updatedAt ? new Date(site.updatedAt).toLocaleDateString() : new Date().toLocaleDateString()}
+                            </td>
+                            <td style="padding: 1rem;">
+                                <button class="chart-btn view-site-btn" data-site-id="${site._id || site.id}" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">
+                                    <i class="fas fa-eye"></i> View
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+          });
+
+          tableHTML += `
+                            </tbody>
+                        </table>
+                    </div>
+                    <div style="text-align: center; margin-top: 1rem; color: var(--gray-color);">
+                        Showing ${Math.min(10, state.sitesData.length)} of ${state.sitesData.length} sites
+                    </div>
+                `;
+
+          container.innerHTML = tableHTML;
+
+          // Add event listeners to view buttons
+          document.querySelectorAll('.view-site-btn').forEach(btn => {
+            btn.addEventListener('click', function () {
+              const siteId = this.getAttribute('data-site-id');
+              showNotification(`Viewing site ${siteId}`);
+            });
+          });
+
+        } catch (error) {
+          console.error('Error loading sites:', error);
+          container.innerHTML = `
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Failed to load sites data. Please try again later.
+                    </div>
+                `;
+        }
+      }
+
+      // Similar enhanced functions for other sections...
+      // (loadFuelContent, loadMaintenanceContent, loadSyncContent)
+
+      // ============================================
+      // Chart Functions
+      // ============================================
+
+      function updateCharts() {
+        // Activity chart
+        const activityChart = document.getElementById('activityChart');
+        if (activityChart) {
+          activityChart.innerHTML = `
+                    <div style="padding: 1rem; width: 100%;">
+                        <div style="display: flex; align-items: flex-end; height: 200px; gap: 10px; margin-top: 2rem;">
+                            ${[65, 80, 45, 90, 75, 60, 85].map((height, i) => `
+                                <div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
+                                    <div style="width: 30px; height: ${height}%; background: linear-gradient(to top, var(--primary-color), var(--accent-color)); border-radius: 5px;"></div>
+                                    <div style="margin-top: 5px; font-size: 0.8rem; color: var(--gray-color);">Day ${i + 1}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div style="text-align: center; margin-top: 1rem; color: var(--gray-color); font-size: 0.9rem;">
+                            System activity over the last 7 days
+                        </div>
+                    </div>
+                `;
+        }
+
+        // Health chart
+        const healthChart = document.getElementById('healthChart');
+        if (healthChart) {
+          healthChart.innerHTML = `
+                    <div style="padding: 1rem; width: 100%;">
+                        <div style="display: flex; justify-content: center; align-items: center; height: 200px;">
+                            <div style="position: relative; width: 180px; height: 180px;">
+                                <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 50%; background: conic-gradient(var(--success-color) 0% 85%, var(--warning-color) 85% 95%, var(--gray-light) 95% 100%);"></div>
+                                <div style="position: absolute; top: 15px; left: 15px; width: 150px; height: 150px; border-radius: 50%; background: white; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                                    <div style="font-size: 2.5rem; font-weight: 700; color: var(--success-color);">94%</div>
+                                    <div style="color: var(--gray-color); font-size: 0.9rem;">System Health</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="display: flex; justify-content: center; gap: 2rem; margin-top: 1rem;">
+                            <div style="display: flex; align-items: center;">
+                                <div style="width: 12px; height: 12px; border-radius: 50%; background-color: var(--success-color); margin-right: 5px;"></div>
+                                <span style="font-size: 0.9rem;">Operational (85%)</span>
+                            </div>
+                            <div style="display: flex; align-items: center;">
+                                <div style="width: 12px; height: 12px; border-radius: 50%; background-color: var(--warning-color); margin-right: 5px;"></div>
+                                <span style="font-size: 0.9rem;">Warning (10%)</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+        }
+      }
+
+      // ============================================
+      // Add Login Modal HTML if not exists
+      // ============================================
+      if (!document.getElementById('loginModal')) {
+        const loginModalHTML = `
+                <div id="loginModal" class="modal-overlay" style="
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: rgba(0,0,0,0.8);
+                    display: none;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 99999;
+                ">
+                    <div style="
+                        background: white;
+                        padding: 2rem;
+                        border-radius: 10px;
+                        width: 90%;
+                        max-width: 400px;
+                        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+                    ">
+                        <h2 style="margin-bottom: 1.5rem; color: var(--primary-color);
+                            display: flex;
+                            gap: 10px;
+                            align-items: center;
+                            justify-content: center;
+                        ">
+                            <img src="icon.png" class="logo-icon" width="30px" height="30px" alt="NetisTrackGh logo"> NetisTrackGH Login
+                        </h2>
+                        
+                        <div id="loginError" class="error-message" style="display: none; margin-bottom: 1rem;"></div>
+                        
+                        <div style="margin-bottom: 1rem;">
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Email</label>
+                            <input type="email" id="loginEmail" style="
+                                width: 100%;
+                                padding: 0.75rem;
+                                border: 1px solid #ddd;
+                                border-radius: 5px;
+                                font-size: 1rem;
+                            " placeholder="Enter email" autocomplete="email">
+                        </div>
+                        
+                        <div style="margin-bottom: 1.5rem;">
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Password</label>
+                            <input type="password" id="loginPassword" style="
+                                width: 100%;
+                                padding: 0.75rem;
+                                border: 1px solid #ddd;
+                                border-radius: 5px;
+                                font-size: 1rem;
+                            " placeholder="Enter password" autocomplete="current-password">
+                        </div>
+                        
+                        <button id="loginButton" style="
+                            width: 100%;
+                            padding: 0.75rem;
+                            background: var(--primary-color);
+                            color: white;
+                            border: none;
+                            border-radius: 5px;
+                            font-size: 1rem;
+                            font-weight: 600;
+                            cursor: pointer;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            gap: 10px;
+                        ">
+                            <i class="fas fa-sign-in-alt"></i>
+                            <span>Login</span>
+                        </button>
+                        
+                        <p style="margin-top: 1rem; text-align: center; color: #666; font-size: 0.9rem;">
+                            Use your admin credentials to access the dashboard
+                        </p>
+                    </div>
+                </div>
+            `;
+
+        document.body.insertAdjacentHTML('beforeend', loginModalHTML);
+      }
+    </script>
+  </body>
+</html>

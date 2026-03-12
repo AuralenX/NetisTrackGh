@@ -1,0 +1,27 @@
+{
+  "version": 2,
+  "buildCommand": "npm install",
+  "installCommand": "npm ci",
+  "environment": {
+    "NODE_ENV": "production"
+  },
+  "functions": {
+    "api/**/*.js": {
+      "memory": 512,
+      "maxDuration": 30,
+      "runtime": "nodejs20.x"
+    }
+  },
+  "routes": [
+    {
+      "src": "^/(.*)$",
+      "dest": "/api/server.js"
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/:path*",
+      "destination": "/api/server.js"
+    }
+  ]
+}

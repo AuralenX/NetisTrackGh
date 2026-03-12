@@ -43,10 +43,10 @@ class AuthController {
       const FIREBASE_API_KEY = process.env.FIREBASE_WEB_API_KEY;
       
       if (!FIREBASE_API_KEY) {
-        logger.error('Firebase API key not configured');
+        logger.error('Firebase Web API key not configured - add FIREBASE_WEB_API_KEY to .env');
         return res.status(500).json({
-          error: 'Authentication service configuration error',
-          code: 'SERVER_ERROR'
+          error: 'Authentication service not configured',
+          code: 'AUTH_CONFIG_ERROR'
         });
       }
 
@@ -63,7 +63,7 @@ class AuthController {
             headers: {
               'Content-Type': 'application/json'
             },
-            timeout: 10000
+            timeout: 15000  // Increased timeout to 15s
           }
         );
 
@@ -168,8 +168,21 @@ class AuthController {
     logger.warn('Firebase authentication failed', {
       errorCode: errorCode,
       email: email,
-      status: error.response?.status
+      status: error.response?.status,
+      errorType: error.code
     });
+
+    // Handle timeout errors
+    if (error.code === 'ECONNABORTED') {
+      logger.error('Firebase request timeout - check your FIREBASE_WEB_API_KEY and internet connection', {
+        email: email,
+        message: error.message
+      });
+      return res.status(503).json({
+        error: 'Authentication service timeout - please check your connection and try again',
+        code: 'SERVICE_TIMEOUT'
+      });
+    }
 
     switch (errorCode) {
       case 'EMAIL_NOT_FOUND':
@@ -199,7 +212,7 @@ class AuthController {
         });
 
       default:
-        if (error.code === 'ECONNABORTED' || error.response?.status >= 500) {
+        if (error.response?.status >= 500) {
           logger.error('Firebase service unavailable', {
             error: error.message,
             status: error.response?.status

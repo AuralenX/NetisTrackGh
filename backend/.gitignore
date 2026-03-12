@@ -9,6 +9,7 @@ node_modules/
 
 # logs 
 logs/*.log
+*.log
 
 # package-lock.json
 package-lock.json

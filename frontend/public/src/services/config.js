@@ -3,6 +3,9 @@
  * Centralized configuration for API base URL and client metadata.
  * Allows runtime override via window.ENV.API_BASE_URL.
  */
+window.ENV = {
+  API_BASE_URL: 'https://netistrackghbackend.auralenx.com/api'
+};
 
 export const API_BASE_URL =
   (typeof window !== 'undefined' && window.ENV && window.ENV.API_BASE_URL) ||

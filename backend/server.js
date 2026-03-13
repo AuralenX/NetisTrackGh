@@ -240,8 +240,8 @@ app.use(errorHandler);
 // Export the app for Netlify Functions
 module.exports = app;
 
-// Only start the server when NOT in Netlify environment
-if (process.env.NETLIFY !== 'true' && require.main === module) {
+// Only start the server when NOT in a serverless environment (Netlify/Vercel)
+if (process.env.NETLIFY !== 'true' && !process.env.VERCEL && require.main === module) {
   const PORT = process.env.PORT || 3000;
   
   const server = app.listen(PORT, () => {

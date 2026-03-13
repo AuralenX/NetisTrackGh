@@ -10,15 +10,15 @@ const logFormat = format.combine(
   format.json()
 );
 
-// Create the logger
-const logger = winston.createLogger({
-  level: process.env.LOG_LEVEL || 'info',
-  format: logFormat,
-  defaultMeta: { 
-    service: 'netistrackgh-backend',
-    environment: process.env.NODE_ENV || 'development'
-  },
-  transports: [
+// Check if running in serverless environment
+const isServerless = process.env.VERCEL || process.env.NETLIFY === 'true';
+
+// Build transports array based on environment
+const transports = [];
+
+// Only use file transports in non-serverless environments
+if (!isServerless) {
+  transports.push(
     // Write all logs with importance level of `error` or less to `error.log`
     new winston.transports.File({ 
       filename: 'logs/error.log', 
@@ -36,12 +36,12 @@ const logger = winston.createLogger({
         format.json()
       )
     })
-  ]
-});
+  );
+}
 
-// If we're not in production, also log to the console
-if (process.env.NODE_ENV !== 'production') {
-  logger.add(new winston.transports.Console({
+// Always add console transport for serverless or development
+transports.push(
+  new winston.transports.Console({
     format: format.combine(
       format.colorize(),
       format.simple(),
@@ -59,8 +59,20 @@ if (process.env.NODE_ENV !== 'production') {
         return log;
       })
     )
-  }));
-}
+  })
+);
+
+// Create the logger
+const logger = winston.createLogger({
+  level: process.env.LOG_LEVEL || 'info',
+  format: logFormat,
+  defaultMeta: { 
+    service: 'netistrackgh-backend',
+    environment: process.env.NODE_ENV || 'development',
+    deployment: isServerless ? (process.env.VERCEL ? 'vercel' : 'netlify') : 'local'
+  },
+  transports: transports
+});
 
 // Create a stream object for Morgan integration
 logger.stream = {

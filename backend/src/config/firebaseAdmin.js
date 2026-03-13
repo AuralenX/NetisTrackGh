@@ -12,8 +12,7 @@ if (missingVars.length > 0) {
   console.error(`❌ ${errorMsg}`);
 }
 
-const privateKey = process.env.FIREBASE_PRIVATE_KEY
-  ?.replace(/\\n/g, '\n');
+const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n');
 
 const serviceAccount = {
   type: "service_account",

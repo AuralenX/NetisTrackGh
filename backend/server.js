@@ -34,59 +34,61 @@ const helmetConfig = process.env.NETLIFY === 'true' ?
 
 app.use(helmetConfig);
 
-const envOrigins = process.env.ALLOWED_ORIGIN
-  ? process.env.ALLOWED_ORIGIN
-      .split(',')
-      .map(o => o.trim())
-      .filter(Boolean)
-  : [];
+// const envOrigins = process.env.ALLOWED_ORIGIN
+//   ? process.env.ALLOWED_ORIGIN
+//       .split(',')
+//       .map(o => o.trim())
+//       .filter(Boolean)
+//   : [];
 
-  const ALLOWED_ORIGINS = [
-  // Production
-  'https://netistrackgh.auralenx.com',
-  'https://netistrackgh.vercel.app',
+//   const ALLOWED_ORIGINS = [
+//   // Production
+//   'https://netistrackgh.auralenx.com',
+//   'https://netistrackgh.vercel.app',
  
-  // Local dev
-  'http://localhost:3000',
-  'http://localhost:5173',
-  'http://localhost:8000',
-  'http://localhost:8888',
-  'http://127.0.0.1:5500',
-  'http://127.0.0.1:3000',
+//   // Local dev
+//   'http://localhost:3000',
+//   'http://localhost:5173',
+//   'http://localhost:8000',
+//   'http://localhost:8888',
+//   'http://127.0.0.1:5500',
+//   'http://127.0.0.1:3000',
  
-  // Any extra origins from .env
-  ...envOrigins,
-].filter(Boolean);
+//   // Any extra origins from .env
+//   ...envOrigins,
+// ].filter(Boolean);
 
-// Remove duplicates
-const UNIQUE_ORIGINS = [...new Set(ALLOWED_ORIGINS)];
+// // Remove duplicates
+// const UNIQUE_ORIGINS = [...new Set(ALLOWED_ORIGINS)];
  
-app.use(cors({
-  origin: function (origin, callback) {
-    // Allow server-to-server / same-origin requests (no origin header)
-    if (!origin) return callback(null, true);
+// app.use(cors({
+//   origin: function (origin, callback) {
+//     // Allow server-to-server / same-origin requests (no origin header)
+//     if (!origin) return callback(null, true);
  
-    if (UNIQUE_ORIGINS.includes(origin)) {
-      callback(null, true);
-    } else {
-      console.warn(`[CORS] Blocked request from origin: ${origin}`);
-      callback(new Error(`CORS: origin ${origin} not allowed`));
-    }
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: [
-    'Content-Type',
-    'Authorization',
-    'X-Requested-With',
-    'X-Client-Version',
-    'X-Client-Platform'
-  ],
-  maxAge: 600,
-}));
+//     if (UNIQUE_ORIGINS.includes(origin)) {
+//       callback(null, true);
+//     } else {
+//       console.warn(`[CORS] Blocked request from origin: ${origin}`);
+//       callback(new Error(`CORS: origin ${origin} not allowed`));
+//     }
+//   },
+//   credentials: true,
+//   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+//   allowedHeaders: [
+//     'Content-Type',
+//     'Authorization',
+//     'X-Requested-With',
+//     'X-Client-Version',
+//     'X-Client-Platform'
+//   ],
+//   maxAge: 600,
+// }));
  
-// Explicitly handle preflight for all routes
-app.options('*', cors());
+// // Explicitly handle preflight for all routes
+// app.options('*', cors());
+
+app.use(cors());
 
 // Rate Limiting
 const limiter = rateLimit({

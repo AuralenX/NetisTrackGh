@@ -158,6 +158,16 @@ app.use('/docs', swaggerUi.serve, swaggerUi.setup(specs, {
   }
 }));
 
+// Simple health check (lightweight, no Firebase dependency)
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'healthy',
+    message: 'Backend is running',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'production'
+  });
+});
+
 // API Status Endpoint
 app.get('/api/status', (req, res) => {
   const uptime = process.uptime();

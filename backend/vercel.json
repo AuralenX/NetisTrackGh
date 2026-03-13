@@ -1,17 +1,8 @@
 {
   "version": 2,
-  "buildCommand": "npm install",
-  "installCommand": "npm ci",
-  "framework": "express",
-  "functions": {
-    "api/**/*.js": {
-      "memory": 512,
-      "maxDuration": 30
-    }
-  },
   "rewrites": [
     {
-      "source": "/:path(.*)",
+      "source": "/(.*)",
       "destination": "/api/server.js"
     }
   ]

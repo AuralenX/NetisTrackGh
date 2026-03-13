@@ -34,31 +34,59 @@ const helmetConfig = process.env.NETLIFY === 'true' ?
 
 app.use(helmetConfig);
 
-// CORS configuration
-// app.use(cors({
-//   origin: function (origin, callback) {
-//     const allowedOrigins = [
-//       'https://netlify.app',
-//       'https://*.netlify.app',
-//       'http://localhost:3000',
-//       'http://127.0.0.1:5500',
-//       'http://localhost:8888', 
-//       'http://localhost:8000', 
-//       process.env.ALLOWED_ORIGIN
-//     ].filter(Boolean);
-    
-//     if (!origin || allowedOrigins.includes(origin) || origin.includes('netlify')) {
-//       callback(null, true);
-//     } else {
-//       callback(new Error('Not allowed by CORS'));
-//     }
-//   },
-//   credentials: true,
-//   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-//   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-Client-Version', 'X-Client-Platform']
-// }));
+const envOrigins = process.env.ALLOWED_ORIGIN
+  ? process.env.ALLOWED_ORIGIN
+      .split(',')
+      .map(o => o.trim())
+      .filter(Boolean)
+  : [];
 
-app.use(cors());
+  const ALLOWED_ORIGINS = [
+  // Production
+  'https://netistrackgh.auralenx.com',
+  'https://netistrackgh.vercel.app',
+ 
+  // Local dev
+  'http://localhost:3000',
+  'http://localhost:5173',
+  'http://localhost:8000',
+  'http://localhost:8888',
+  'http://127.0.0.1:5500',
+  'http://127.0.0.1:3000',
+ 
+  // Any extra origins from .env
+  ...envOrigins,
+].filter(Boolean);
+
+// Remove duplicates
+const UNIQUE_ORIGINS = [...new Set(ALLOWED_ORIGINS)];
+ 
+app.use(cors({
+  origin: function (origin, callback) {
+    // Allow server-to-server / same-origin requests (no origin header)
+    if (!origin) return callback(null, true);
+ 
+    if (UNIQUE_ORIGINS.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.warn(`[CORS] Blocked request from origin: ${origin}`);
+      callback(new Error(`CORS: origin ${origin} not allowed`));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: [
+    'Content-Type',
+    'Authorization',
+    'X-Requested-With',
+    'X-Client-Version',
+    'X-Client-Platform'
+  ],
+  maxAge: 600,
+}));
+ 
+// Explicitly handle preflight for all routes
+app.options('*', cors());
 
 // Rate Limiting
 const limiter = rateLimit({
@@ -240,8 +268,8 @@ app.use(errorHandler);
 // Export the app for Netlify Functions
 module.exports = app;
 
-// Only start the server when NOT in a serverless environment (Netlify/Vercel)
-if (process.env.NETLIFY !== 'true' && !process.env.VERCEL && require.main === module) {
+// Only start the server when NOT in Netlify environment
+if (process.env.NETLIFY !== 'true' && require.main === module) {
   const PORT = process.env.PORT || 3000;
   
   const server = app.listen(PORT, () => {

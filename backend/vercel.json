@@ -2,9 +2,7 @@
   "version": 2,
   "buildCommand": "npm install",
   "installCommand": "npm ci",
-  "environment": {
-    "NODE_ENV": "production"
-  },
+  "framework": "express",
   "functions": {
     "api/**/*.js": {
       "memory": 512,
@@ -12,15 +10,9 @@
       "runtime": "nodejs20.x"
     }
   },
-  "routes": [
-    {
-      "src": "^/(.*)$",
-      "dest": "/api/server.js"
-    }
-  ],
   "rewrites": [
     {
-      "source": "/:path*",
+      "source": "/:path(.*)",
       "destination": "/api/server.js"
     }
   ]

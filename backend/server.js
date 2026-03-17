@@ -5,6 +5,9 @@ const rateLimit = require('express-rate-limit');
 const path = require('path');
 require('dotenv').config();
 
+// Swagger setup
+const { swaggerUi, specs } = require('./src/config/swagger');
+
 const app = express();
 
 app.use(helmet({
@@ -111,9 +114,15 @@ if (process.env.NODE_ENV === 'production' || process.env.VERCEL) {
   app.set('trust proxy', 1);
 }
 
-// Optional: serve dashboard UI from backend/public (local/self-host only)
-if (process.env.SERVE_DASHBOARD === 'true') {
+// ============================================
+// MODIFIED: Serve static files conditionally
+// ============================================
+if (process.env.NETLIFY !== 'true') {
   app.use(express.static(path.join(__dirname, 'public')));
+  
+  app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  });
 
   app.get('/icon.png', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'icon.png'));
@@ -189,6 +198,24 @@ app.get('/api/status', (req, res) => {
   });
 });
 
+// Frontend Configuration Endpoint
+app.get('/api/config', (req, res) => {
+  res.json({
+    firebase: {
+      apiKey: process.env.FIREBASE_WEB_API_KEY,
+      authDomain: process.env.FIREBASE_AUTH_DOMAIN || "netistrackgh.firebaseapp.com",
+      projectId: process.env.FIREBASE_PROJECT_ID || "netistrackgh",
+      storageBucket: process.env.FIREBASE_STORAGE_BUCKET || "netistrackgh.firebasestorage.app",
+      messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID || "701158642294",
+      appId: process.env.FIREBASE_APP_ID || "1:701158642294:web:1f5eed9c227c3e4cc18557",
+      measurementId: process.env.FIREBASE_MEASUREMENT_ID || "G-BLRYP2K2Q0"
+    },
+    emailjs: {
+      publicKey: process.env.EMAILJS_PUBLIC_KEY
+    }
+  });
+});
+
 // Health Check
 app.get('/health', (req, res) => {
   res.status(200).json({ 
@@ -206,18 +233,20 @@ const authRoutes = require('./src/routes/authRoutes');
 const siteRoutes = require('./src/routes/siteRoutes');
 const fuelRoutes = require('./src/routes/fuelRoutes');
 const maintenanceRoutes = require('./src/routes/maintenanceRoutes');
-const syncRoutes        = require('./src/routes/syncRoutes');
+const syncRoutes = require('./src/routes/syncRoutes');
 
-app.use('/api/auth',        authRoutes);
-app.use('/api/sites',       siteRoutes);
-app.use('/api/fuel',        fuelRoutes);
+// API Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/sites', siteRoutes);
+app.use('/api/fuel', fuelRoutes);
 app.use('/api/maintenance', maintenanceRoutes);
-app.use('/api/sync',        syncRoutes);
+app.use('/api/sync', syncRoutes);
 
+// API Welcome route
 app.get('/api', (req, res) => {
   res.json({
-    message:       'Welcome to NetisTrackGh Backend API',
-    version:       '1.0.0',
+    message: 'Welcome to NetisTrackGh Backend API',
+    version: '1.0.0',
     documentation: '/docs',
     status: '/health',
     apiStatus: '/api/status',
@@ -266,13 +295,49 @@ module.exports = app;
 // Only start the server when running directly (local/self-hosted)
 if (require.main === module) {
   const PORT = process.env.PORT || 3000;
-  app.listen(PORT, () => {
+  
+  const server = app.listen(PORT, () => {
+    const isProduction = process.env.NODE_ENV === 'production';
+    
     console.log(`
-🚀 NetisTrackGh Backend Started
-📍 Local:   http://localhost:${PORT}
-📚 Docs:    http://localhost:${PORT}/docs
-❤️  Health:  http://localhost:${PORT}/health
-📊 Status:  http://localhost:${PORT}/api/status
+🚀 NetisTrackGh Backend & Dashboard Server Started!
+📊 Environment: ${process.env.NODE_ENV || 'development'}
+🔗 Server running on port: ${PORT}
+📍 Local Dashboard: http://localhost:${PORT}
+📍 API Documentation: http://localhost:${PORT}/docs
+
+📊 DASHBOARD ENDPOINTS:
+✅ Dashboard: http://localhost:${PORT}/
+✅ API Status: http://localhost:${PORT}/api/status
+✅ Health Check: http://localhost:${PORT}/health
+
+🔧 API ENDPOINTS:
+✅ Authentication: http://localhost:${PORT}/api/auth
+✅ Sites: http://localhost:${PORT}/api/sites  
+✅ Fuel: http://localhost:${PORT}/api/fuel
+✅ Maintenance: http://localhost:${PORT}/api/maintenance
+✅ Sync: http://localhost:${PORT}/api/sync
+
+📚 Documentation: http://localhost:${PORT}/docs
+
+${isProduction ? '🔒 Production Mode: Security features enabled' : '🐛 Development Mode: Debug features enabled'}
     `);
   });
+
+  // Graceful shutdown
+  const gracefulShutdown = (signal) => {
+    console.log(`\n🛑 Received ${signal}, closing server gracefully...`);
+    server.close(() => {
+      console.log('✅ HTTP server closed.');
+      process.exit(0);
+    });
+
+    setTimeout(() => {
+      console.error('❌ Could not close connections in time, forcefully shutting down');
+      process.exit(1);
+    }, 10000);
+  };
+
+  process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+  process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 }

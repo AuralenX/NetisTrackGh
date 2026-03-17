@@ -21,55 +21,6 @@ app.use(helmet({
   }
 }));
 
-// const envOrigins = process.env.ALLOWED_ORIGIN
-//   ? process.env.ALLOWED_ORIGIN
-//       .split(',')
-//       .map(o => o.trim())
-//       .filter(Boolean)
-//   : [];
-
-const ALLOWED_ORIGINS = [
-  'https://netistrackgh.auralenx.com',
-  'https://netistrackghbackend.auralenx.com',
-  'https://netistrackgh.vercel.app',
-  'http://localhost:3000',
-  'http://localhost:5173',
-  'http://localhost:8000',
-  'http://localhost:8888',
-  'http://127.0.0.1:5500',
-  'http://127.0.0.1:3000',
-  ...envOrigins,
-];
-
-// // Remove duplicates
-// const UNIQUE_ORIGINS = [...new Set(ALLOWED_ORIGINS)];
- 
-// app.use(cors({
-//   origin: function (origin, callback) {
-//     // Allow server-to-server / same-origin requests (no origin header)
-//     if (!origin) return callback(null, true);
- 
-//     if (UNIQUE_ORIGINS.includes(origin)) {
-//       callback(null, true);
-//     } else {
-//       console.warn(`[CORS] Blocked request from origin: ${origin}`);
-//       callback(new Error(`CORS: origin ${origin} not allowed`));
-//     }
-//   },
-//   credentials: true,
-//   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-//   allowedHeaders: [
-//     'Content-Type',
-//     'Authorization',
-//     'X-Requested-With',
-//     'X-Client-Version',
-//     'X-Client-Platform'
-//   ],
-//   maxAge: 600,
-// }));
- 
-// // Explicitly handle preflight for all routes
-// app.options('*', cors());
 
 app.use(cors());
 
@@ -84,14 +35,13 @@ const envOrigins = process.env.ALLOWED_ORIGIN
 const ALLOWED_ORIGINS = [
   // Production
   'https://netistrackgh.auralenx.com',
+  'https://netistrackghbackend.auralenx.com',
   'https://netistrackgh.vercel.app',
   'https://netistrackgh-frontend.vercel.app',
 
   // Local dev
   'http://localhost:3000',
-  'http://localhost:5173',
   'http://localhost:8000',
-  'http://localhost:8888',
   'http://127.0.0.1:5500',
   'http://127.0.0.1:3000',
 

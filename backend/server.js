@@ -7,34 +7,26 @@ require('dotenv').config();
 
 const app = express();
 
-// ============================================
-// TRUST PROXY — must be first for Vercel
-// ============================================
-app.set('trust proxy', 1);
-
-// ============================================
-// HELMET
-// ============================================
 app.use(helmet({
-  crossOriginResourcePolicy: { policy: 'cross-origin' },
+  crossOriginResourcePolicy: { policy: "cross-origin" },
   contentSecurityPolicy: {
     directives: {
-      defaultSrc:  ["'self'"],
-      styleSrc:    ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com", "https://fonts.googleapis.com"],
-      scriptSrc:   ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com"],
-      imgSrc:      ["'self'", "data:", "https:"],
-      fontSrc:     ["'self'", "https://fonts.gstatic.com", "https://cdnjs.cloudflare.com", "data:"],
-      connectSrc:  ["'self'", "https://netistrackghbackend.auralenx.com", "https://netistrackgh.vercel.app"],
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com", "https://fonts.googleapis.com"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com"],
+      imgSrc: ["'self'", "data:", "https:"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com", "https://cdnjs.cloudflare.com", "data:"],
+      connectSrc: ["'self'"]
     }
   }
 }));
 
-// ============================================
-// CORS — properly parses multi-origin env var
-// ============================================
-const envOrigins = process.env.ALLOWED_ORIGIN
-  ? process.env.ALLOWED_ORIGIN.split(',').map(o => o.trim()).filter(Boolean)
-  : [];
+// const envOrigins = process.env.ALLOWED_ORIGIN
+//   ? process.env.ALLOWED_ORIGIN
+//       .split(',')
+//       .map(o => o.trim())
+//       .filter(Boolean)
+//   : [];
 
 const ALLOWED_ORIGINS = [
   'https://netistrackgh.auralenx.com',
@@ -49,34 +41,95 @@ const ALLOWED_ORIGINS = [
   ...envOrigins,
 ];
 
-const UNIQUE_ORIGINS = [...new Set(ALLOWED_ORIGINS.filter(Boolean))];
+// // Remove duplicates
+// const UNIQUE_ORIGINS = [...new Set(ALLOWED_ORIGINS)];
+ 
+// app.use(cors({
+//   origin: function (origin, callback) {
+//     // Allow server-to-server / same-origin requests (no origin header)
+//     if (!origin) return callback(null, true);
+ 
+//     if (UNIQUE_ORIGINS.includes(origin)) {
+//       callback(null, true);
+//     } else {
+//       console.warn(`[CORS] Blocked request from origin: ${origin}`);
+//       callback(new Error(`CORS: origin ${origin} not allowed`));
+//     }
+//   },
+//   credentials: true,
+//   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+//   allowedHeaders: [
+//     'Content-Type',
+//     'Authorization',
+//     'X-Requested-With',
+//     'X-Client-Version',
+//     'X-Client-Platform'
+//   ],
+//   maxAge: 600,
+// }));
+ 
+// // Explicitly handle preflight for all routes
+// app.options('*', cors());
 
-const corsOptions = {
-  origin: function (origin, callback) {
-    // Allow requests with no origin (server-to-server, curl, Postman)
-    if (!origin) return callback(null, true);
-    if (UNIQUE_ORIGINS.includes(origin)) {
-      callback(null, true);
-    } else {
-      console.warn(`[CORS] Blocked: ${origin}`);
-      callback(new Error(`CORS: origin ${origin} not allowed`));
+app.use(cors());
+
+// CORS allowlist enforcement
+const envOrigins = process.env.ALLOWED_ORIGIN
+  ? process.env.ALLOWED_ORIGIN
+      .split(',')
+      .map(o => o.trim())
+      .filter(Boolean)
+  : [];
+
+const ALLOWED_ORIGINS = [
+  // Production
+  'https://netistrackgh.auralenx.com',
+  'https://netistrackgh.vercel.app',
+  'https://netistrackgh-frontend.vercel.app',
+
+  // Local dev
+  'http://localhost:3000',
+  'http://localhost:5173',
+  'http://localhost:8000',
+  'http://localhost:8888',
+  'http://127.0.0.1:5500',
+  'http://127.0.0.1:3000',
+
+  // Any extra origins from .env
+  ...envOrigins,
+].filter(Boolean);
+
+// Remove duplicates
+const UNIQUE_ORIGINS = [...new Set(ALLOWED_ORIGINS)];
+
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+
+  // Allow server-to-server / same-origin requests (no origin header)
+  if (!origin) {
+    return next();
+  }
+
+  if (UNIQUE_ORIGINS.includes(origin)) {
+    res.header('Access-Control-Allow-Origin', origin);
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,PATCH,OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-Requested-With,X-Client-Version,X-Client-Platform');
+
+    if (req.method === 'OPTIONS') {
+      return res.sendStatus(204);
     }
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: [
-    'Content-Type',
-    'Authorization',
-    'X-Requested-With',
-    'X-Client-Version',
-    'X-Client-Platform',
-  ],
-  maxAge: 600,
-};
 
-// Handle preflight for ALL routes FIRST — before any other middleware
-app.options('*', cors(corsOptions));
-app.use(cors(corsOptions));
+    return next();
+  }
+
+  console.warn(`[CORS] Blocked request from origin: ${origin}`);
+  return res.status(403).json({
+    error: 'CORS: origin not allowed',
+    code: 'CORS_ORIGIN_DENIED',
+    origin
+  });
+});
 
 // ============================================
 // RATE LIMITING
@@ -93,49 +146,115 @@ const limiter = rateLimit({
 
 app.use('/api/', limiter);
 
-// ============================================
-// BODY PARSING
-// ============================================
-app.use(express.json({ limit: '1mb' }));
-app.use(express.urlencoded({ extended: true, limit: '1mb' }));
+// Body Parsing Middleware
+app.use(express.json({
+  limit: process.env.NODE_ENV === 'production' ? '1mb' : '10mb'
+}));
 
-// ============================================
-// SWAGGER — load lazily to avoid cold-start cost
-// ============================================
-try {
-  const { swaggerUi, specs } = require('./src/config/swagger');
-  app.use('/docs', swaggerUi.serve, swaggerUi.setup(specs, {
-    explorer: true,
-    customSiteTitle: 'NetisTrackGh API Documentation',
-    swaggerOptions: {
-      persistAuthorization: true,
-      docExpansion: 'none',
-      filter: true,
-      displayRequestDuration: true,
-    },
-  }));
-} catch (e) {
-  console.warn('[Swagger] Failed to load:', e.message);
-  app.get('/docs', (req, res) => res.json({ error: 'Swagger unavailable' }));
+app.use(express.urlencoded({ 
+  extended: true,
+  limit: process.env.NODE_ENV === 'production' ? '1mb' : '10mb'
+}));
+
+// Trust proxy in production
+if (process.env.NODE_ENV === 'production' || process.env.VERCEL) {
+  app.set('trust proxy', 1);
 }
 
-// ============================================
-// STATIC FILES (backend dashboard)
-// ============================================
-app.use(express.static(path.join(__dirname, 'public')));
+// Optional: serve dashboard UI from backend/public (local/self-host only)
+if (process.env.SERVE_DASHBOARD === 'true') {
+  app.use(express.static(path.join(__dirname, 'public')));
+
+  app.get('/icon.png', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'icon.png'));
+  });
+}
+
+// Static files for uploads
 app.use('/uploads', express.static(path.join(__dirname, 'upload')));
 
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+// Swagger Documentation
+app.use('/docs', swaggerUi.serve, swaggerUi.setup(specs, {
+  explorer: true,
+  customCss: `
+    .swagger-ui .topbar { display: none }
+    .swagger-ui .info .title { color: #2563eb; }
+    .swagger-ui .btn.authorize { background-color: #2563eb; }
+    .swagger-ui .scheme-container { background: #f8fafc; }
+  `,
+  customSiteTitle: 'NetisTrackGh API Documentation',
+  swaggerOptions: {
+    persistAuthorization: true,
+    docExpansion: 'none',
+    filter: true,
+    displayRequestDuration: true,
+    defaultModelsExpandDepth: 2,
+    defaultModelExpandDepth: 2
+  }
+}));
+
+// Simple health check (lightweight, no Firebase dependency)
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'healthy',
+    message: 'Backend is running',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'production'
+  });
 });
 
-// ============================================
-// API ROUTES — loaded after health checks
-// so health/status never get blocked
-// ============================================
-const authRoutes        = require('./src/routes/authRoutes');
-const siteRoutes        = require('./src/routes/siteRoutes');
-const fuelRoutes        = require('./src/routes/fuelRoutes');
+// API Status Endpoint
+app.get('/api/status', (req, res) => {
+  const uptime = process.uptime();
+  const memoryUsage = process.memoryUsage();
+  
+  res.json({
+    status: 'operational',
+    service: 'NetisTrackGh Backend API',
+    version: '1.0.0',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development',
+    deployment: process.env.VERCEL ? 'vercel' : 'self-hosted',
+    uptime: {
+      hours: Math.floor(uptime / 3600),
+      minutes: Math.floor((uptime % 3600) / 60),
+      seconds: Math.floor(uptime % 60)
+    },
+    memory: {
+      rss: `${Math.round(memoryUsage.rss / 1024 / 1024)} MB`,
+      heapTotal: `${Math.round(memoryUsage.heapTotal / 1024 / 1024)} MB`,
+      heapUsed: `${Math.round(memoryUsage.heapUsed / 1024 / 1024)} MB`
+    },
+    endpoints: {
+      dashboard: process.env.SERVE_DASHBOARD === 'true' ? '/' : null,
+      docs: '/docs',
+      health: '/health',
+      apiStatus: '/api/status',
+      auth: '/api/auth',
+      sites: '/api/sites',
+      fuel: '/api/fuel',
+      maintenance: '/api/maintenance',
+      sync: '/api/sync'
+    }
+  });
+});
+
+// Health Check
+app.get('/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'OK', 
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development',
+    deployment: process.env.VERCEL ? 'vercel' : 'self-hosted',
+    uptime: process.uptime(),
+    memory: process.memoryUsage()
+  });
+});
+
+// Import routes
+const authRoutes = require('./src/routes/authRoutes');
+const siteRoutes = require('./src/routes/siteRoutes');
+const fuelRoutes = require('./src/routes/fuelRoutes');
 const maintenanceRoutes = require('./src/routes/maintenanceRoutes');
 const syncRoutes        = require('./src/routes/syncRoutes');
 
@@ -150,47 +269,51 @@ app.get('/api', (req, res) => {
     message:       'Welcome to NetisTrackGh Backend API',
     version:       '1.0.0',
     documentation: '/docs',
-    health:        '/health',
-    status:        '/api/status',
+    status: '/health',
+    apiStatus: '/api/status',
+    dashboard: process.env.SERVE_DASHBOARD === 'true' ? '/' : null,
+    environment: process.env.NODE_ENV || 'development',
+    deployment: process.env.VERCEL ? 'vercel' : 'self-hosted'
   });
 });
 
-// ============================================
-// 404 HANDLER
-// ============================================
-app.use((req, res) => {
-  if (req.path.startsWith('/api/') || req.path.startsWith('/docs') || req.path.startsWith('/health')) {
-    return res.status(404).json({
-      error: 'Route not found',
-      path:  req.originalUrl,
-      availableEndpoints: ['/health', '/api/status', '/api/auth', '/api/sites', '/api/fuel', '/api/maintenance', '/api/sync', '/docs'],
-    });
-  }
-  // SPA fallback
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-// ============================================
-// ERROR HANDLER
-// ============================================
-try {
-  const { errorHandler } = require('./src/utils/errorHandler');
-  app.use(errorHandler);
-} catch (e) {
-  app.use((err, req, res, next) => {
-    console.error('[Error]', err.message);
-    res.status(err.status || 500).json({ error: err.message || 'Internal server error' });
+// Optional: dashboard fallback for local/self-hosted SPA
+if (process.env.SERVE_DASHBOARD === 'true') {
+  app.get('*', (req, res) => {
+    if (req.path.startsWith('/api/') || 
+        req.path.startsWith('/docs') || 
+        req.path.startsWith('/health') ||
+        req.path.startsWith('/uploads')) {
+      return res.status(404).json({
+        error: 'Route not found',
+        path: req.originalUrl,
+        method: req.method,
+        availableEndpoints: {
+          dashboard: '/',
+          docs: '/docs',
+          health: '/health',
+          status: '/api/status',
+          auth: '/api/auth',
+          sites: '/api/sites',
+          fuel: '/api/fuel',
+          maintenance: '/api/maintenance',
+          sync: '/api/sync'
+        }
+      });
+    }
+    
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
   });
 }
 
-// ============================================
-// EXPORT for Vercel serverless
-// ============================================
+// Error Handling Middleware
+const { errorHandler } = require('./src/utils/errorHandler');
+app.use(errorHandler);
+
+// Export the app for serverless runtimes (e.g., Vercel)
 module.exports = app;
 
-// ============================================
-// LOCAL DEV SERVER
-// ============================================
+// Only start the server when running directly (local/self-hosted)
 if (require.main === module) {
   const PORT = process.env.PORT || 3000;
   app.listen(PORT, () => {

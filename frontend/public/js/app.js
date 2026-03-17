@@ -160,6 +160,39 @@ class NetisTrackApp {
 
         console.log('🔄 Handling route change to:', hash);
 
+        const auth = window.authService;
+        const isAuthAvailable = !!auth;
+        const isAuthenticated = isAuthAvailable && auth.isAuthenticated && auth.isAuthenticated();
+
+        const publicRoutes = ['login', 'password-reset', 'request-account'];
+        const protectedRoutes = [
+            'dashboard',
+            'analytics',
+            'sites',
+            'fuel',
+            'maintenance',
+            'reports',
+            'profile',
+            'settings',
+            'help',
+            'about',
+            'site-details'
+        ];
+
+        // Redirect unauthenticated users away from protected routes
+        if (protectedRoutes.includes(hash) && !isAuthenticated) {
+            console.warn('🔐 Protected route without auth, redirecting to login');
+            window.location.hash = 'login';
+            return;
+        }
+
+        // Redirect authenticated users away from auth pages
+        if (publicRoutes.includes(hash) && isAuthenticated && auth.redirectBasedOnRole) {
+            console.log('🔐 Already authenticated, redirecting based on role');
+            auth.redirectBasedOnRole();
+            return;
+        }
+
         try {
             // Show loading state
             mainContent.innerHTML = `

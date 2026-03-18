@@ -13,7 +13,7 @@
   <a href="documentation/README.md"><img src="https://img.shields.io/badge/Docs-Index-blue?logo=readthedocs" alt="Docs Index" /></a>
   <a href="http://localhost:3000/docs"><img src="https://img.shields.io/badge/Swagger-API%20Docs-brightgreen?logo=swagger" alt="Swagger Docs" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT" /></a>
-  <a href="https://netistracgh.auralenx.com"><img src="https://img.shields.io/badge/🔗%20Visit-Site-blue" alt="Visit Link" /></a>
+  <a href="https://netistrackgh.auralenx.com"><img src="https://img.shields.io/badge/🔗%20Visit-Site-blue" alt="Visit Link" /></a>
 </p>
 
 ---
@@ -51,7 +51,7 @@ It tracks fuel consumption, schedules maintenance, logs activities, and provides
 | Backend        | Node.js, Express.js          |
 | Database       | Firebase Firestore           |
 | Authentication | Firebase Auth + JWT          |
-| Hosting        | Netlify (Backend & Frontend) |
+| Hosting        | Vercel (Backend API) + static hosting for SPA |
 
 ## 🔗 Quick Links
 

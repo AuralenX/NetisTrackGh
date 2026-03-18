@@ -1,4 +1,6 @@
 // NetisTrackGh - Main Application Router
+import { API_BASE_URL } from '../src/services/config.js';
+
 class NetisTrackApp {
     constructor() {
         this.currentPage = null;
@@ -88,10 +90,23 @@ class NetisTrackApp {
             }
             
             try {
-                // Initialize with your public key - UPDATE THIS WITH YOUR ACTUAL KEY
-                emailjs.init('4_lUB6bKxfFV5xsno');
-                console.log('✅ EmailJS initialized');
-                resolve();
+                // Fetch config from backend API
+                const configUrl = `${API_BASE_URL}/config`;
+                fetch(configUrl)
+                    .then(response => response.json())
+                    .then(config => {
+                        if (!config.emailjs || !config.emailjs.publicKey) {
+                            throw new Error('EmailJS public key not configured');
+                        }
+                        emailjs.init(config.emailjs.publicKey);
+                        console.log('✅ EmailJS initialized');
+                        resolve();
+                    })
+                    .catch(error => {
+                        console.error('❌ EmailJS initialization failed:', error);
+                        console.error('Config URL attempted:', configUrl);
+                        reject(error);
+                    });
             } catch (error) {
                 console.error('❌ EmailJS initialization failed:', error);
                 reject(error);
@@ -102,24 +117,30 @@ class NetisTrackApp {
     initializeFirebase() {
         return new Promise((resolve, reject) => {
             try {
-                // Firebase configuration - UPDATE WITH YOUR ACTUAL CONFIG
-                const firebaseConfig = {
-                    apiKey: "AIzaSyBperUb2lwgzAj21izWQqqAVKF9tgP3jbM",
-                    authDomain: "netistrackgh.firebaseapp.com",
-                    projectId: "netistrackgh",
-                    storageBucket: "netistrackgh.firebasestorage.app",
-                    messagingSenderId: "701158642294",
-                    appId: "1:701158642294:web:1f5eed9c227c3e4cc18557",
-                    measurementId: "G-BLRYP2K2Q0"
-                };
+                // Fetch config from backend API
+                const configUrl = `${API_BASE_URL}/config`;
+                fetch(configUrl)
+                    .then(response => response.json())
+                    .then(config => {
+                        if (!config.firebase) {
+                            throw new Error('Firebase config not available');
+                        }
+                        
+                        const firebaseConfig = config.firebase;
 
-                // Check if Firebase is already initialized
-                if (!firebase.apps.length) {
-                    firebase.initializeApp(firebaseConfig);
-                }
-                
-                console.log('✅ Firebase initialized');
-                resolve();
+                        // Check if Firebase is already initialized
+                        if (!firebase.apps.length) {
+                            firebase.initializeApp(firebaseConfig);
+                        }
+                        
+                        console.log('✅ Firebase initialized');
+                        resolve();
+                    })
+                    .catch(error => {
+                        console.error('❌ Firebase initialization failed:', error);
+                        console.error('Config URL attempted:', configUrl);
+                        reject(error);
+                    });
                 
             } catch (error) {
                 console.error('❌ Firebase initialization failed:', error);
@@ -159,6 +180,39 @@ class NetisTrackApp {
         }
 
         console.log('🔄 Handling route change to:', hash);
+
+        const auth = window.authService;
+        const isAuthAvailable = !!auth;
+        const isAuthenticated = isAuthAvailable && auth.isAuthenticated && auth.isAuthenticated();
+
+        const publicRoutes = ['login', 'password-reset', 'request-account'];
+        const protectedRoutes = [
+            'dashboard',
+            'analytics',
+            'sites',
+            'fuel',
+            'maintenance',
+            'reports',
+            'profile',
+            'settings',
+            'help',
+            'about',
+            'site-details'
+        ];
+
+        // Redirect unauthenticated users away from protected routes
+        if (protectedRoutes.includes(hash) && !isAuthenticated) {
+            console.warn('🔐 Protected route without auth, redirecting to login');
+            window.location.hash = 'login';
+            return;
+        }
+
+        // Redirect authenticated users away from auth pages
+        if (publicRoutes.includes(hash) && isAuthenticated && auth.redirectBasedOnRole) {
+            console.log('🔐 Already authenticated, redirecting based on role');
+            auth.redirectBasedOnRole();
+            return;
+        }
 
         try {
             // Show loading state

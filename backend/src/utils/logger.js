@@ -10,8 +10,8 @@ const logFormat = format.combine(
   format.json()
 );
 
-// Check if running in serverless environment
-const isServerless = process.env.VERCEL || process.env.NETLIFY === 'true';
+// Check if running in serverless environment (Vercel)
+const isServerless = Boolean(process.env.VERCEL);
 
 // Build transports array based on environment
 const transports = [];
@@ -69,7 +69,7 @@ const logger = winston.createLogger({
   defaultMeta: { 
     service: 'netistrackgh-backend',
     environment: process.env.NODE_ENV || 'development',
-    deployment: isServerless ? (process.env.VERCEL ? 'vercel' : 'netlify') : 'local'
+    deployment: isServerless ? 'vercel' : 'local'
   },
   transports: transports
 });

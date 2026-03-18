@@ -10,99 +10,93 @@ const { swaggerUi, specs } = require('./src/config/swagger');
 
 const app = express();
 
-// ============================================
-// MODIFIED: Helmet configuration for Netlify
-// ============================================
-const helmetConfig = process.env.NETLIFY === 'true' ? 
-  helmet({
-    crossOriginResourcePolicy: { policy: "cross-origin" },
-    contentSecurityPolicy: false // Disable CSP in Netlify, handled by functions/server.js
-  }) : 
-  helmet({
-    crossOriginResourcePolicy: { policy: "cross-origin" },
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-        styleSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com", "https://fonts.googleapis.com"],
-        scriptSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com"],
-        imgSrc: ["'self'", "data:", "https:"],
-        fontSrc: ["'self'", "https://fonts.gstatic.com", "https://cdnjs.cloudflare.com", "data:"],
-        connectSrc: ["'self'"]
-      }
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com", "https://fonts.googleapis.com"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com"],
+      imgSrc: ["'self'", "data:", "https:"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com", "https://cdnjs.cloudflare.com", "data:"],
+      connectSrc: ["'self'"]
     }
-  });
+  }
+}));
 
-app.use(helmetConfig);
-
-// const envOrigins = process.env.ALLOWED_ORIGIN
-//   ? process.env.ALLOWED_ORIGIN
-//       .split(',')
-//       .map(o => o.trim())
-//       .filter(Boolean)
-//   : [];
-
-//   const ALLOWED_ORIGINS = [
-//   // Production
-//   'https://netistrackgh.auralenx.com',
-//   'https://netistrackgh.vercel.app',
- 
-//   // Local dev
-//   'http://localhost:3000',
-//   'http://localhost:5173',
-//   'http://localhost:8000',
-//   'http://localhost:8888',
-//   'http://127.0.0.1:5500',
-//   'http://127.0.0.1:3000',
- 
-//   // Any extra origins from .env
-//   ...envOrigins,
-// ].filter(Boolean);
-
-// // Remove duplicates
-// const UNIQUE_ORIGINS = [...new Set(ALLOWED_ORIGINS)];
- 
-// app.use(cors({
-//   origin: function (origin, callback) {
-//     // Allow server-to-server / same-origin requests (no origin header)
-//     if (!origin) return callback(null, true);
- 
-//     if (UNIQUE_ORIGINS.includes(origin)) {
-//       callback(null, true);
-//     } else {
-//       console.warn(`[CORS] Blocked request from origin: ${origin}`);
-//       callback(new Error(`CORS: origin ${origin} not allowed`));
-//     }
-//   },
-//   credentials: true,
-//   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-//   allowedHeaders: [
-//     'Content-Type',
-//     'Authorization',
-//     'X-Requested-With',
-//     'X-Client-Version',
-//     'X-Client-Platform'
-//   ],
-//   maxAge: 600,
-// }));
- 
-// // Explicitly handle preflight for all routes
-// app.options('*', cors());
 
 app.use(cors());
 
-// Rate Limiting
-const limiter = rateLimit({
-  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000,
-  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100,
-  message: {
-    error: 'Too many requests from this IP, please try again later.',
-    code: 'RATE_LIMIT_EXCEEDED'
-  },
-  standardHeaders: true,
-  legacyHeaders: false
+// CORS allowlist enforcement
+const envOrigins = process.env.ALLOWED_ORIGIN
+  ? process.env.ALLOWED_ORIGIN
+      .split(',')
+      .map(o => o.trim())
+      .filter(Boolean)
+  : [];
+
+const ALLOWED_ORIGINS = [
+  // Production
+  'https://netistrackgh.auralenx.com',
+  'https://netistrackghbackend.auralenx.com',
+  'https://netistrackgh.vercel.app',
+  'https://netistrackgh-frontend.vercel.app',
+
+  // Local dev
+  'http://localhost:3000',
+  'http://localhost:8000',
+  'http://127.0.0.1:5500',
+  'http://127.0.0.1:3000',
+
+  // Any extra origins from .env
+  ...envOrigins,
+].filter(Boolean);
+
+// Remove duplicates
+const UNIQUE_ORIGINS = [...new Set(ALLOWED_ORIGINS)];
+
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+
+  // Allow server-to-server / same-origin requests (no origin header)
+  if (!origin) {
+    return next();
+  }
+
+  if (UNIQUE_ORIGINS.includes(origin)) {
+    res.header('Access-Control-Allow-Origin', origin);
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,PATCH,OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-Requested-With,X-Client-Version,X-Client-Platform');
+
+    if (req.method === 'OPTIONS') {
+      return res.sendStatus(204);
+    }
+
+    return next();
+  }
+
+  console.warn(`[CORS] Blocked request from origin: ${origin}`);
+  return res.status(403).json({
+    error: 'CORS: origin not allowed',
+    code: 'CORS_ORIGIN_DENIED',
+    origin
+  });
 });
 
-// Apply rate limiting only to API routes
+// ============================================
+// RATE LIMITING
+// ============================================
+const limiter = rateLimit({
+  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000,
+  max:       parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100,
+  message:   { error: 'Too many requests', code: 'RATE_LIMIT_EXCEEDED' },
+  standardHeaders: true,
+  legacyHeaders:   false,
+  // Required for Vercel — use memory store (default), skip if undefined IP
+  skip: (req) => !req.ip,
+});
+
 app.use('/api/', limiter);
 
 // Body Parsing Middleware
@@ -116,7 +110,7 @@ app.use(express.urlencoded({
 }));
 
 // Trust proxy in production
-if (process.env.NODE_ENV === 'production' || process.env.NETLIFY === 'true') {
+if (process.env.NODE_ENV === 'production' || process.env.VERCEL) {
   app.set('trust proxy', 1);
 }
 
@@ -179,7 +173,7 @@ app.get('/api/status', (req, res) => {
     version: '1.0.0',
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'development',
-    deployment: process.env.NETLIFY ? 'netlify' : 'self-hosted',
+    deployment: process.env.VERCEL ? 'vercel' : 'self-hosted',
     uptime: {
       hours: Math.floor(uptime / 3600),
       minutes: Math.floor((uptime % 3600) / 60),
@@ -191,7 +185,7 @@ app.get('/api/status', (req, res) => {
       heapUsed: `${Math.round(memoryUsage.heapUsed / 1024 / 1024)} MB`
     },
     endpoints: {
-      dashboard: process.env.NETLIFY ? 'https://' + process.env.URL : '/',
+      dashboard: process.env.SERVE_DASHBOARD === 'true' ? '/' : null,
       docs: '/docs',
       health: '/health',
       apiStatus: '/api/status',
@@ -204,13 +198,31 @@ app.get('/api/status', (req, res) => {
   });
 });
 
+// Frontend Configuration Endpoint
+app.get('/api/config', (req, res) => {
+  res.json({
+    firebase: {
+      apiKey: process.env.FIREBASE_WEB_API_KEY,
+      authDomain: process.env.FIREBASE_AUTH_DOMAIN || "netistrackgh.firebaseapp.com",
+      projectId: process.env.FIREBASE_PROJECT_ID || "netistrackgh",
+      storageBucket: process.env.FIREBASE_STORAGE_BUCKET || "netistrackgh.firebasestorage.app",
+      messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID || "701158642294",
+      appId: process.env.FIREBASE_APP_ID || "1:701158642294:web:1f5eed9c227c3e4cc18557",
+      measurementId: process.env.FIREBASE_MEASUREMENT_ID || "G-BLRYP2K2Q0"
+    },
+    emailjs: {
+      publicKey: process.env.EMAILJS_PUBLIC_KEY
+    }
+  });
+});
+
 // Health Check
 app.get('/health', (req, res) => {
   res.status(200).json({ 
     status: 'OK', 
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'development',
-    deployment: process.env.NETLIFY ? 'netlify' : 'self-hosted',
+    deployment: process.env.VERCEL ? 'vercel' : 'self-hosted',
     uptime: process.uptime(),
     memory: process.memoryUsage()
   });
@@ -238,14 +250,14 @@ app.get('/api', (req, res) => {
     documentation: '/docs',
     status: '/health',
     apiStatus: '/api/status',
-    dashboard: process.env.NETLIFY ? 'https://' + process.env.URL : '/',
+    dashboard: process.env.SERVE_DASHBOARD === 'true' ? '/' : null,
     environment: process.env.NODE_ENV || 'development',
-    deployment: process.env.NETLIFY ? 'netlify' : 'self-hosted'
+    deployment: process.env.VERCEL ? 'vercel' : 'self-hosted'
   });
 });
 
-// Only add catch-all route when NOT on Netlify
-if (process.env.NETLIFY !== 'true') {
+// Optional: dashboard fallback for local/self-hosted SPA
+if (process.env.SERVE_DASHBOARD === 'true') {
   app.get('*', (req, res) => {
     if (req.path.startsWith('/api/') || 
         req.path.startsWith('/docs') || 
@@ -277,11 +289,11 @@ if (process.env.NETLIFY !== 'true') {
 const { errorHandler } = require('./src/utils/errorHandler');
 app.use(errorHandler);
 
-// Export the app for Netlify Functions
+// Export the app for serverless runtimes (e.g., Vercel)
 module.exports = app;
 
-// Only start the server when NOT in Netlify environment
-if (process.env.NETLIFY !== 'true' && require.main === module) {
+// Only start the server when running directly (local/self-hosted)
+if (require.main === module) {
   const PORT = process.env.PORT || 3000;
   
   const server = app.listen(PORT, () => {

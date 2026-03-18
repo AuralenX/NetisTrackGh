@@ -1,5 +1,17 @@
-# md files
-*.md
+# Node modules
+node_modules/
 
-# text files
-*.txt
+# Logs
+logs/
+*.log
+
+# Environment files
+*.env
+
+# Local service/config files
+*.local
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/

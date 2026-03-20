@@ -1,4 +1,5 @@
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
   "version": 2,
   "buildCommand": "npm install",
   "installCommand": "npm ci --prefer-offline",
@@ -9,7 +10,6 @@
       "maxDuration": 30
     }
   },
-  "public": "public",
   "rewrites": [
     {
       "source": "^/(?!api|docs|health|uploads|public).*$",

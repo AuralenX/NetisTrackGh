@@ -12,7 +12,7 @@
   },
   "rewrites": [
     {
-      "source": "^/(?!api|docs|health|uploads|public).*$",
+      "source": "/:path(.*)",
       "destination": "/api/server.js"
     }
   ],

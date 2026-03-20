@@ -26,6 +26,6 @@ try {
 // Wrap with serverless-http for Vercel
 // Binary handling ensures static assets are served correctly
 module.exports = serverless(app, {
-  binary: ['image/*', 'font/*', 'application/*+json'],
+  binary: ['image/*', 'font/*', 'application/octet-stream'],
   provider: 'aws'
 });

@@ -1,25 +1,31 @@
 const serverless = require('serverless-http');
-const app = require('../server');
+const path = require('path');
 
-// Add health check before wrapping with serverless
-app.get('/__health', (req, res) => {
-  res.status(200).json({ 
-    status: 'healthy',
-    timestamp: new Date().toISOString(),
-    environment: 'vercel'
+// Error handling: Attempt to load the Express app
+let app;
+try {
+  app = require('../server');
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('[Serverless] ✅ Express app loaded successfully');
+  }
+} catch (error) {
+  console.error('[Serverless] ❌ CRITICAL: Failed to load Express app', error.message);
+  
+  // Fallback: Create minimal app to prevent Vercel crash
+  const express = require('express');
+  app = express();
+  app.use((req, res) => {
+    res.status(503).json({
+      error: 'Backend unavailable',
+      message: 'Failed to initialize application server',
+      timestamp: new Date().toISOString()
+    });
   });
-});
-
-// Add root health endpoint
-app.get('/', (req, res) => {
-  res.status(200).json({ 
-    message: 'NetisTrackGh Backend API',
-    status: 'running',
-    version: '1.0.0',
-    docs: '/docs',
-    status_endpoint: '/api/status'
-  });
-});
+}
 
 // Wrap with serverless-http for Vercel
-module.exports = serverless(app);
+// Binary handling ensures static assets are served correctly
+module.exports = serverless(app, {
+  binary: ['image/*', 'font/*', 'application/*+json'],
+  provider: 'aws'
+});

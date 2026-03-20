@@ -1,7 +1,7 @@
 {
   "version": 2,
   "buildCommand": "npm install",
-  "installCommand": "npm ci",
+  "installCommand": "npm ci --prefer-offline",
   "framework": "express",
   "functions": {
     "api/**/*.js": {
@@ -9,9 +9,10 @@
       "maxDuration": 30
     }
   },
+  "public": "public",
   "rewrites": [
     {
-      "source": "/:path(.*)",
+      "source": "^/(?!api|docs|health|uploads|public).*$",
       "destination": "/api/server.js"
     }
   ],
@@ -29,9 +30,19 @@
         },
         {
           "key": "Access-Control-Allow-Headers",
-          "value": "Content-Type,Authorization,X-Client-Version,X-Client-Platform"
+          "value": "Content-Type,Authorization,X-Requested-With,X-Client-Version,X-Client-Platform"
+        }
+      ]
+    },
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
         }
       ]
     }
   ]
 }
+
